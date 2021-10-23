@@ -1,0 +1,3 @@
+C:/Users/EGYPT_LAPTOP/Desktop/Well/build/CMakeFiles/QtVTKProject.dir
+C:/Users/EGYPT_LAPTOP/Desktop/Well/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/EGYPT_LAPTOP/Desktop/Well/build/CMakeFiles/ZERO_CHECK.dir
