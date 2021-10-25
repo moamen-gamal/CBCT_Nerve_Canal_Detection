@@ -17,7 +17,7 @@ class MainWindow : public QMainWindow
 
 private:
 	Ui::MainWindow *ui;
-
+	
 	vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow;
 	vtkSmartPointer<vtkRenderer> mRenderer;
 	vtkSmartPointer<QVTKInteractor> mInteractor;
@@ -31,6 +31,9 @@ public:
 
 public slots:
 	void onDrawSphereClick();
+	void onDrawSphere2Click();
+	void TweakTheDicom();
+
 
 };
 

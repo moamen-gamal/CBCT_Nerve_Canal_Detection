@@ -1,4 +1,0 @@
-﻿  Automatic MOC and UIC for target QtVTKProject
-  mainwindow.cpp
-C:\Users\EGYPT_LAPTOP\Desktop\Well\src\mainwindow.cpp(59): warning C4129: 'M': unrecognized character escape sequence
-  QtVTKProject.vcxproj -> C:\Users\EGYPT_LAPTOP\Desktop\Well\build\Release\QtVTKProject.exe
