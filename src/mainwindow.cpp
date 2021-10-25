@@ -34,12 +34,12 @@ MainWindow::MainWindow(QWidget *parent) :
 	// Set the background color 
 	mRenderer->SetBackground(0, 0, 0);
 
-	
 
 
 
 
-	
+
+
 
 	// Set the UI connections
 	QObject::connect(ui->pushButton, &QPushButton::clicked,
@@ -55,8 +55,8 @@ void MainWindow::onDrawSphereClick() {
 	vtkNew<vtkNamedColors> colors;
 
 	// Verify input arguments
-	 
-	QString inputFilename =QFileDialog::getOpenFileName(this,"open a file","G:\MedicalDATA\131041 - UandL DAVID SPANN") ;
+
+	QString inputFilename = QFileDialog::getOpenFileName(this, "open a file", "G:\MedicalDATA");
 
 	// Read all the DICOM files in the specified directory.
 	vtkNew<vtkDICOMImageReader> reader;
@@ -67,20 +67,16 @@ void MainWindow::onDrawSphereClick() {
 	vtkNew<vtkImageViewer2> imageViewer;
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-	imageViewer->SetupInteractor(renderWindowInteractor);
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	imageViewer->Render();
-	imageViewer->GetRenderer()->SetBackground(
-	colors->GetColor3d("0,0,0").GetData());
-	imageViewer->GetRenderWindow()->SetWindowName("ReadDICOM");
 	imageViewer->GetRenderer()->ResetCamera();
 	imageViewer->Render();
-	vtkSmartPointer<vtkPolyDataMapper>imagemapper = vtkSmartPointer<vtkPolyDataMapper>::New();
-	vtkSmartPointer<vtkActor> imager = vtkSmartPointer<vtkActor>::New();
-	
-	
+
 	renderWindowInteractor->Start();
 
-	
+
 
 
 }
