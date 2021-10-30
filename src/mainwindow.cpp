@@ -146,7 +146,7 @@
 #include <vtkXMLImageDataReader.h>
 
 #include <vtkFixedPointVolumeRayCastMapper.h>
-
+#include <vtkMetaImageReader.h>
 
 
 #define VTI_FILETYPE 1
@@ -203,6 +203,50 @@
 #include <vtkRenderer.h>
 #include <vtkVolume.h>
 #include <vtkVolumeProperty.h>
+
+
+
+
+#include <vtkActor.h>
+#include <vtkCamera.h>
+#include <vtkImageActor.h>
+#include <vtkImageData.h>
+#include <vtkImageDataGeometryFilter.h>
+#include <vtkImageMapToColors.h>
+#include <vtkImageMapper3D.h>
+#include <vtkLookupTable.h>
+#include <vtkMetaImageReader.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkOutlineFilter.h>
+#include <vtkPolyDataMapper.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkStripper.h>
+#include <vtkVersion.h>
+#include <vtkVolume16Reader.h>
+
+#include <vtkContourFilter.h>
+#include <vtkPolyDataNormals.h>
+
+
+// vtkFlyingEdges3D was introduced in VTK >= 8.2
+#if VTK_MAJOR_VERSION >= 9 || (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 2)
+#define USE_FLYING_EDGES
+#else
+#undef USE_FLYING_EDGES
+#endif
+
+#ifdef USE_FLYING_EDGES
+#include <vtkFlyingEdges3D.h>
+#else
+#include <vtkMarchingCubes.h>
+#endif
+
+
+
 
 
 namespace {
@@ -1229,7 +1273,7 @@ void MainWindow::SLICERER()
 	 // Set the default window size
 	 renWin->SetSize(600, 600);
 	 renWin->SetWindowName("FixedPointVolumeRayCastMapperCT");
-	 renWin->Render();
+	 //renWin->Render();
 
 	 // Add the volume to the scene
 	 renderer2->AddVolume(volume);
@@ -1244,11 +1288,116 @@ void MainWindow::SLICERER()
 	 camera->SetDistance(421.227);
 	 camera->SetClippingRange(146.564, 767.987);
 
-	 // interact with data
-	 renWin->Render();
 
-	 iren->Start();
+
+
+
+	 vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	 vtkNew<vtkInteractorStyleImage> style;
+
+	 renderWindowInteractor->SetInteractorStyle(style);
+
+	 renderWindowInteractor->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	 //renderWindow->Render();
+	 renderWindowInteractor->Initialize();
+
+
+	 //filteredActor->RotateZ(90);
+	 //filteredActor->RotateX(90);
+
+	 mRenderer->SetBackground(
+		 colors->GetColor3d("LightSlateGray").GetData());
+	 mRenderWindow->SetSize(600, 300);
+	 mRenderWindow->AddRenderer(renderer2);
+	 mRenderWindow->SetInteractor(mInteractor);
+
+	 mRenderWindow->Render();
+	 //ui->openGLWidget->SetRenderWindow(renderWindow);
+	 renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+	 mRenderer->ResetCamera();
+	 //mRenderWindow->Render();
+
+	 renderWindowInteractor->Start();
+
+
+	 ui->openGLWidget->SetRenderWindow(renWin);
+
+
+
+
+	 // interact with data
+	 //renWin->Render();
+
+	 //iren->Start();
 	
+
+	 /*
+
+	 vtkNew <vtkVolume16Reader > v16;
+	 v16->SetDataDimensions(64, 64);
+	 v16->SetImageRange(1, 93);
+	 v16->SetDataByteOrderToLittleEndian();
+	 v16->SetFilePrefix("headsq/quarter");
+	 v16->SetDataSpacing(3.2, 3.2, 1.5);
+
+	 vtkNew <vtkContourFilter > skinExtractor;
+	 skinExtractor->SetInputConnection(v16->GetOutputPort());
+	 skinExtractor->SetValue(0, 500);
+	 vtkNew < vtkPolyDataNormals > skinNormals;
+	 skinNormals->SetInputConnection(skinExtractor->GetOutputPort());
+	 skinNormals->SetFeatureAngle(60.0);
+	 vtkNew <vtkPolyDataMapper > skinMapper;
+	 skinMapper->SetInputConnection(skinNormals->GetOutputPort());
+	 skinMapper->ScalarVisibilityOff();
+	 vtkNew <vtkActor > skin;
+	 skin->SetMapper(skinMapper);
+	 skin->GetProperty()->SetDiffuseColor(
+		 colors->GetColor3d("SkinColor").GetData());
+	 vtkNew <vtkOutlineFilter > outlineData;
+	 outlineData->SetInputConnection(v16->GetOutputPort());
+	 vtkNew <vtkPolyDataMapper > mapOutline;
+	 mapOutline->SetInputConnection(outlineData->GetOutputPort());
+	 vtkNew <vtkActor > outline;
+	 outline->SetMapper(mapOutline);
+	 outline->GetProperty()->SetColor(
+	 colors->GetColor3d("Black").GetData());
+	 vtkNew <vtkCamera > aCamera;
+	 aCamera->SetViewUp(0, 0, -1);
+	 aCamera->SetPosition(0, 1, 0);
+	 aCamera->SetFocalPoint(0, 0, 0);
+	 aCamera->ComputeViewPlaneNormal();
+
+	 renderer2->AddActor(outline);
+	 renderer2->AddActor(skin);
+	 renderer2->SetActiveCamera(aCamera);
+	 renderer2->ResetCamera();
+	 renderer2->SetBackground(
+		 colors->GetColor3d("BkgColor").GetData());
+	 aCamera->Dolly(1.5);
+	 renWin->SetSize(640, 480);
+	 renderer2->ResetCameraClippingRange();
+	 // Initialize the event loop and then start it.
+	 iren->Initialize();
+	 iren->Start();
+
+
+	 */
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 	
