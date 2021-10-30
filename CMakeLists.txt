@@ -13,6 +13,24 @@ find_package(Qt5Gui REQUIRED)
 find_package(Qt5OpenGL REQUIRED)
 find_package(Qt5Xml REQUIRED)
 find_package(Qt5Widgets REQUIRED)
+find_package(VTK COMPONENTS 
+  vtkCommonColor
+  vtkCommonCore
+  vtkCommonDataModel
+  vtkIOImage
+  vtkIOXML
+  vtkImagingCore
+  vtkInteractionStyle
+  vtkInteractionWidgets
+  vtkRenderingContextOpenGL2
+  vtkRenderingCore
+  vtkRenderingFreeType
+  vtkRenderingGL2PSOpenGL2
+  vtkRenderingOpenGL2
+  vtkRenderingVolume
+  vtkRenderingVolumeOpenGL2
+  QUIET
+)
 
 #======================= INCLUSION OF VTK ======================#
 set(VTK_DIR $ENV{VTK_DIR})
@@ -55,3 +73,7 @@ target_link_libraries( QtVTKProject Qt5::Xml)
 target_link_libraries( QtVTKProject Qt5::Widgets)
 target_link_libraries( QtVTKProject ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 target_link_libraries( QtVTKProject ${VTK_LIBRARIES})
+vtk_module_autoinit(
+    TARGETS QtVTKProject
+    MODULES ${VTK_LIBRARIES}
+    )

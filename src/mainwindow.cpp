@@ -122,208 +122,157 @@
 
 // needed to easily convert int to std::string
 #include <sstream>
+#include <vtkImageResliceMapper.h>
+
+#include <vtkBoxWidget.h>
+#include <vtkCamera.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkCommand.h>
+#include <vtkDICOMImageReader.h>
+#include <vtkFixedPointVolumeRayCastMapper.h>
+#include <vtkImageData.h>
+#include <vtkImageResample.h>
+#include <vtkMetaImageReader.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkPiecewiseFunction.h>
+#include <vtkPlanes.h>
+#include <vtkProperty.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkVolume.h>
+#include <vtkVolumeProperty.h>
+#include <vtkXMLImageDataReader.h>
+
+#include <vtkFixedPointVolumeRayCastMapper.h>
 
 
-/*
-class vtkImageInteractionCallback : public vtkCommand
-{
-public:
-	static vtkImageInteractionCallback* New() { return new vtkImageInteractionCallback; }
 
-	vtkImageInteractionCallback()
-	{
-		this->Slicing = 0;
-		this->ImageReslice = nullptr;
-		this->Interactor = nullptr;
-	}
+#define VTI_FILETYPE 1
+#define MHA_FILETYPE 2
 
-	void SetImageReslice(vtkImageReslice* reslice) { this->ImageReslice = reslice; }
 
-	vtkImageReslice* GetImageReslice() { return this->ImageReslice; }
+#include "vtkCamera.h"
+#include "vtkColorTransferFunction.h"
+#include "vtkCommand.h"
+#include "vtkDataArray.h"
+#include "vtkEncodedGradientShader.h"
+#include "vtkFiniteDifferenceGradientEstimator.h"
+#include "vtkFixedPointRayCastImage.h"
+#include "vtkFixedPointVolumeRayCastCompositeGOHelper.h"
+#include "vtkFixedPointVolumeRayCastCompositeGOShadeHelper.h"
+#include "vtkFixedPointVolumeRayCastCompositeHelper.h"
+#include "vtkFixedPointVolumeRayCastCompositeShadeHelper.h"
+#include "vtkFixedPointVolumeRayCastMIPHelper.h"
+#include "vtkGraphicsFactory.h"
+#include "vtkImageData.h"
+#include "vtkLight.h"
+#include "vtkMath.h"
+#include "vtkMultiThreader.h"
+#include "vtkObjectFactory.h"
+#include "vtkPiecewiseFunction.h"
+#include "vtkPlaneCollection.h"
+#include "vtkPointData.h"
+#include "vtkRayCastImageDisplayHelper.h"
+#include "vtkRenderWindow.h"
+#include "vtkRenderer.h"
+#include "vtkSphericalDirectionEncoder.h"
+#include "vtkStreamingDemandDrivenPipeline.h"
+#include "vtkTimerLog.h"
+#include "vtkTransform.h"
+#include "vtkVolumeProperty.h"
+#include "vtkVolumeRayCastSpaceLeapingImageFilter.h"
 
-	void SetInteractor(vtkRenderWindowInteractor* interactor) { this->Interactor = interactor; }
+#include <cmath>
+#include <exception>
+#include <vtkDataSetMapper.h>
 
-	vtkRenderWindowInteractor* GetInteractor() { return this->Interactor; }
 
-	void Execute(vtkObject*, unsigned long event, void*) override
-	{
-		vtkRenderWindowInteractor* interactor = this->GetInteractor();
+#include <vtkCamera.h>
+#include <vtkColorTransferFunction.h>
+#include <vtkContourValues.h>
+#include <vtkInteractorStyleTrackballCamera.h>
+#include <vtkMetaImageReader.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkOpenGLGPUVolumeRayCastMapper.h>
+#include <vtkPiecewiseFunction.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkVolume.h>
+#include <vtkVolumeProperty.h>
 
-		int lastPos[2];
-		interactor->GetLastEventPosition(lastPos);
-		int currPos[2];
-		interactor->GetEventPosition(currPos);
-
-		if (event == vtkCommand::LeftButtonPressEvent)
-		{
-			this->Slicing = 1;
-		}
-		else if (event == vtkCommand::LeftButtonReleaseEvent)
-		{
-			this->Slicing = 0;
-		}
-		else if (event == vtkCommand::MouseMoveEvent)
-		{
-			if (this->Slicing)
-			{
-				vtkImageReslice* reslice = this->ImageReslice;
-
-				// Increment slice position by deltaY of mouse
-				int deltaY = lastPos[1] - currPos[1];
-
-				reslice->Update();
-				double sliceSpacing = reslice->GetOutput()->GetSpacing()[2];
-				vtkMatrix4x4* matrix = reslice->GetResliceAxes();
-				// move the center point that we are slicing through
-				double point[4];
-				double center[4];
-				point[0] = 0.0;
-				point[1] = 0.0;
-				point[2] = sliceSpacing * deltaY;
-				point[3] = 1.0;
-				matrix->MultiplyPoint(point, center);
-				matrix->SetElement(0, 3, center[0]);
-				matrix->SetElement(1, 3, center[1]);
-				matrix->SetElement(2, 3, center[2]);
-				interactor->Render();
-			}
-			else
-			{
-				vtkInteractorStyle* style =
-					vtkInteractorStyle::SafeDownCast(interactor->GetInteractorStyle());
-				if (style)
-				{
-					style->OnMouseMove();
-				}
-			}
-		}
-	}
-
-private:
-	// Actions (slicing only, for now)
-	int Slicing;
-
-	// Pointer to vtkImageReslice
-	vtkImageReslice* ImageReslice;
-
-	// Pointer to the interactor
-	vtkRenderWindowInteractor* Interactor;
-};
-
-*/
 
 namespace {
-
-	// helper class to format slice status message
-	class StatusMessage
+	void PrintUsage()
 	{
-	public:
-		static std::string Format(int slice, int maxSlice)
-		{
-			std::stringstream tmp;
-			tmp << "Slice Number  " << slice + 1 << "/" << maxSlice + 1;
-			return tmp.str();
-		}
-	};
-
-	// Define own interaction style
-	class myVtkInteractorStyleImage : public vtkInteractorStyleImage
-	{
-	public:
-		static myVtkInteractorStyleImage* New();
-		vtkTypeMacro(myVtkInteractorStyleImage, vtkInteractorStyleImage);
-
-	protected:
-		vtkImageViewer2* _ImageViewer;
-		vtkTextMapper* _StatusMapper;
-		int _Slice;
-		int _MinSlice;
-		int _MaxSlice;
-
-	public:
-		void SetImageViewer(vtkImageViewer2* imageViewer)
-		{
-			_ImageViewer = imageViewer;
-			_MinSlice = imageViewer->GetSliceMin();
-			_MaxSlice = imageViewer->GetSliceMax();
-			_Slice = _MinSlice;
-			cout << "Slicer: Min = " << _MinSlice << ", Max = " << _MaxSlice
-				<< std::endl;
-		}
-
-		void SetStatusMapper(vtkTextMapper* statusMapper)
-		{
-			_StatusMapper = statusMapper;
-		}
-
-	protected:
-		void MoveSliceForward()
-		{
-			if (_Slice < _MaxSlice)
-			{
-				_Slice += 1;
-				cout << "MoveSliceForward::Slice = " << _Slice << std::endl;
-				_ImageViewer->SetSlice(_Slice);
-				std::string msg = StatusMessage::Format(_Slice, _MaxSlice);
-				_StatusMapper->SetInput(msg.c_str());
-				_ImageViewer->Render();
-			}
-		}
-
-		void MoveSliceBackward()
-		{
-			if (_Slice > _MinSlice)
-			{
-				_Slice -= 1;
-				cout << "MoveSliceBackward::Slice = " << _Slice << std::endl;
-				_ImageViewer->SetSlice(_Slice);
-				std::string msg = StatusMessage::Format(_Slice, _MaxSlice);
-				_StatusMapper->SetInput(msg.c_str());
-				_ImageViewer->Render();
-			}
-		}
-
-		virtual void OnKeyDown()
-		{
-			std::string key = this->GetInteractor()->GetKeySym();
-			if (key.compare("Up") == 0)
-			{
-				// cout << "Up arrow key was pressed." << endl;
-				MoveSliceForward();
-			}
-			else if (key.compare("Down") == 0)
-			{
-				// cout << "Down arrow key was pressed." << endl;
-				MoveSliceBackward();
-			}
-			// forward event
-			vtkInteractorStyleImage::OnKeyDown();
-		}
-
-		virtual void OnMouseWheelForward()
-		{
-			// std::cout << "Scrolled mouse wheel forward." << std::endl;
-			MoveSliceForward();
-			// don't forward events, otherwise the image will be zoomed
-			// in case another interactorstyle is used (e.g. trackballstyle, ...)
-			// vtkInteractorStyleImage::OnMouseWheelForward();
-		}
-
-		virtual void OnMouseWheelBackward()
-		{
-			// std::cout << "Scrolled mouse wheel backward." << std::endl;
-			if (_Slice > _MinSlice)
-			{
-				MoveSliceBackward();
-			}
-			// don't forward events, otherwise the image will be zoomed
-			// in case another interactorstyle is used (e.g. trackballstyle, ...)
-			// vtkInteractorStyleImage::OnMouseWheelBackward();
-		}
-	};
-
-	vtkStandardNewMacro(myVtkInteractorStyleImage);
-
+		cout << "Usage: " << endl;
+		cout << endl;
+		cout << "  FixedPointVolumeRayCastMapperCT <options>" << endl;
+		cout << endl;
+		cout << "where options may include: " << endl;
+		cout << endl;
+		cout << "  -DICOM <directory>" << endl;
+		cout << "  -VTI <filename>" << endl;
+		cout << "  -MHA <filename>" << endl;
+		cout << "  -DependentComponents" << endl;
+		cout << "  -Clip" << endl;
+		cout << "  -MIP <window> <level>" << endl;
+		cout << "  -CompositeRamp <window> <level>" << endl;
+		cout << "  -CompositeShadeRamp <window> <level>" << endl;
+		cout << "  -CT_Skin" << endl;
+		cout << "  -CT_Bone" << endl;
+		cout << "  -CT_Muscle" << endl;
+		cout << "  -FrameRate <rate>" << endl;
+		cout << "  -DataReduction <factor>" << endl;
+		cout << endl;
+		cout << "You must use either the -DICOM option to specify the directory where"
+			<< endl;
+		cout << "the data is located or the -VTI or -MHA option to specify the path "
+			"of a .vti file."
+			<< endl;
+		cout << endl;
+		cout << "By default, the program assumes that the file has independent "
+			"components,"
+			<< endl;
+		cout << "use -DependentComponents to specify that the file has dependent "
+			"components."
+			<< endl;
+		cout << endl;
+		cout << "Use the -Clip option to display a cube widget for clipping the "
+			"volume."
+			<< endl;
+		cout << "Use the -FrameRate option with a desired frame rate (in frames per "
+			"second)"
+			<< endl;
+		cout << "which will control the interactive rendering rate." << endl;
+		cout << "Use the -DataReduction option with a reduction factor (greater than "
+			"zero and"
+			<< endl;
+		cout << "less than one) to reduce the data before rendering." << endl;
+		cout << "Use one of the remaining options to specify the blend function"
+			<< endl;
+		cout << "and transfer functions. The -MIP option utilizes a maximum intensity"
+			<< endl;
+		cout << "projection method, while the others utilize compositing. The"
+			<< endl;
+		cout << "-CompositeRamp option is unshaded compositing, while the other"
+			<< endl;
+		cout << "compositing options employ shading." << endl;
+		cout << endl;
+		cout << "Note: MIP, CompositeRamp, CompositeShadeRamp, CT_Skin, CT_Bone,"
+			<< endl;
+		cout << "and CT_Muscle are appropriate for DICOM data. MIP, CompositeRamp,"
+			<< endl;
+		cout << "and RGB_Composite are appropriate for RGB data." << endl;
+		cout << endl;
+		cout
+			<< "Example: FixedPointVolumeRayCastMapperCT -DICOM CTNeck -MIP 4096 1024"
+			<< endl;
+		cout << endl;
+	}
 } // namespace
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -553,9 +502,35 @@ void MainWindow::onDrawSphere2Click()
 
 void MainWindow::TweakTheDicom()
 {
-	
+	double zeer[6];
 	vtkNew<vtkDICOMImageReader> reader;
+	
+	//double wow = 0;
+	//double * rour = &wow ;
+	//reader->SetDataDirection(rour);
+	//reader->GetDataByteOrder();
+	auto x = reader->GetImageOrientationPatient();
+	*(x + 0) = 0;
+	*(x + 1) = 1;
+	*(x + 2) = 0;
+	*(x + 3) = 0;
+	*(x + 4) = 0;
+	*(x + 5) = -1;
+	
+	for (int i = 0; i < 6;i++)
+	{
+
+		zeer[i] = *(x + i);
+		//QString rw = QString::number(zeer[i]);
+		//QMessageBox t;
+		//t.setText(rw);
+		//t.exec();
+	}
+	
+	
 	int y = ui->horizontalSlider->value();
+
+	
 
 	//QMessageBox msgBox;
 	const char *converter = (Full_Path_Names[y]).c_str();
@@ -569,6 +544,12 @@ void MainWindow::TweakTheDicom()
 	
 	// Visualize
 	vtkNew<vtkImageViewer2> imageViewer;
+	
+	//vtkNew<vtkAlgorithmOutput> theOutput;
+	//theOutput.Get( = *(reader->GetOutputPort();
+	//QMessageBox t;
+	//t.setText( );
+
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	
 	//imageViewer->SetSliceOrientationToXZ();
@@ -589,17 +570,55 @@ void MainWindow::Gaussin_Filter()
 {
 	float x[10];
 	vtkNew<vtkDICOMImageReader> reader;
-	auto r= reader->GetImageOrientationPatient();
-	for (int i = 0;i < 5;i++) {
-		x[i] = *(r + i);
+	
+	auto ror=reader->GetPixelSpacing();
+	
+	//int j = 0;
+	float zeerX[1000];
+	float zeerY[1000];
+	float zeerZ[1000];
+	float changeer;
+	std::string ZeerString[100];
+	ZeerString[0] = "";
+	for (int i = 0; i <1000 ; i++)
+	{
 		
-		//QMessageBox t;
-		//QString K = QString::number(x[i]);
+		zeerX[i] = *(ror + ((3*i)));
+		zeerY[i] = *(ror + ((3 * i) + 1));
+		zeerZ[i] = *(ror + ((3 * i) + 2));
 
-		//t.setText(K);
-		//t.exec();
+		//changeer = zeerX[i];
+		//*(ror + ((3 * i))) = zeerZ[i];
+		//*(ror + ((3 * i) + 2)) = changeer;
 
 	}
+	
+	for (int i = 0; i < 100; i++)
+	{
+		
+		//if (i % 10 == 0) { j++; }
+		//else
+		//{
+			//ZeerString[0] = ZeerString[0].append (std::to_string(zeerX[i])) + " ";
+
+		//}
+		
+	}
+	
+	
+	//QMessageBox t;
+	//QString eow = QString::fromStdString(ZeerString[0]);
+	//t.setText(eow);
+	//t.exec();
+	
+	vtkNew<vtkImageData> image;
+	image->SetExtent(0, 9, 0, 9, 0, 0);
+	image->AllocateScalars(VTK_INT, 1);
+	int* pixel = static_cast<int*>(image->GetScalarPointer(0, 9, 0));
+	vtkNew<vtkImageReslice> reslice;
+	reslice->SetOutputExtent(0, 9, 0, 100, 0, 0);
+	reslice->SetInputData(image);
+	reslice->Update();
 	
 	
 	int y = ui->horizontalSlider->value();
@@ -637,10 +656,17 @@ void MainWindow::Gaussin_Filter()
 	// (xmin, ymin, xmax, ymax)
 	double originalViewport[4] = { 0.0, 0.0, 0.5, 1.0 };
 	double filteredViewport[4] = { 0.5, 0.0, 1.0, 1.0 };
+	vtkNew<vtkImageResliceMapper> imageResliceMapper;
+	imageResliceMapper->SetInputData(image);
+	
+	vtkNew<vtkImageSlice> imageSlice;
+	imageSlice->SetMapper(imageResliceMapper);
 
+	;
 	// Setup renderers
 	vtkNew<vtkRenderer> originalRenderer;
 	originalRenderer->SetViewport(originalViewport);
+	originalRenderer->AddViewProp(imageSlice);
 	originalRenderer->AddActor(originalActor);
 	originalRenderer->ResetCamera();
 	originalRenderer->SetBackground(colors->GetColor3d("0").GetData());
@@ -675,7 +701,7 @@ void MainWindow::Gaussin_Filter()
 
 	
 	//filteredActor->RotateZ(90);
-	filteredActor->RotateX(90);
+	//filteredActor->RotateX(90);
 
 	mRenderer->AddActor(filteredActor);
 	mRenderer->SetViewport(filteredViewport);
@@ -792,415 +818,440 @@ void MainWindow::OpenSTLER()
 
 void MainWindow::SLICERER()
 {
+	int count = 1;
+	char* dirname = NULL;
+	double opacityWindow = 4096;
+	double opacityLevel = 2048;
+	int blendType = 0;
+	int clip = 0;
+	double reductionFactor = 1.0;
+	double frameRate = 10.0;
+	char* fileName = 0;
+	int fileType = 0;
 
-
-	QMessageBox r2;
-	r2.setText("Okay");
-	r2.exec();
+	bool independentComponents = true;
 
 	
-	//QString inputFilename = QFileDialog::getOpenFileName(this, "open a file", "G:\MedicalDATA");
+	
 	QString dir = QFileDialog::getExistingDirectory(this,
 		tr("Open Directory"),
 		"G:\MedicalData",
 		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
 	QDir  TheDirectory = dir;
-	QStringList DICOMS = TheDirectory.entryList(QStringList() << "*.dcm", QDir::Files);
+		
+	std::string welldoe = dir.toStdString();
 
-
-	/*
-	QMessageBox messagerrr;
-	messagerrr.setText(dir);
-	messagerrr.exec();
-	*/
-	/*
-
-	foreach(QString Dicom, DICOMS)
-	{
-		DICOM_Names.push_back(Dicom.toUtf8().constData());
-		std::string the_path = dir.toStdString() + "\\" + Dicom.toUtf8().constData();
-		Full_Path_Names.push_back(the_path);
-
-	}
-	const char *W;
-	std::string K = dir.toStdString();
-	K.append("\0");
-	W = K.c_str();
-
-	QString QWE = W;
-	QMessageBox r;
-	r.setText(QWE);
-	r.exec();
-
+	 
+	 QMessageBox teer;
+	 QString rooow = QString::fromStdString(welldoe);
+	 
+	 teer.setText(rooow);
+	 teer.exec();
 	
-	vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-	vtkSmartPointer<vtkDICOMImageReader> reader = vtkSmartPointer<vtkDICOMImageReader>::New();
-	vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-	vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-	vtkSmartPointer<vtkInteractorStyleTrackballCamera> interactorStyle = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
-	vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-	vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
-	vtkSmartPointer<vtkVolumeProperty> volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-	vtkSmartPointer<vtkPiecewiseFunction> gradientOpacity = vtkSmartPointer<vtkPiecewiseFunction>::New();
-	vtkSmartPointer<vtkPiecewiseFunction> scalarOpacity = vtkSmartPointer<vtkPiecewiseFunction>::New();
-	vtkSmartPointer<vtkColorTransferFunction> color = vtkSmartPointer<vtkColorTransferFunction>::New();
-	vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
-
-	vtkSmartPointer<vtkDICOMImageReaderVector>readrerer= vtkSmartPointer<vtkDICOMImageReaderVector>::New();
-
-	reader->SetDirectoryName(W);
-	reader->Update();
-	imageData->ShallowCopy(reader->GetOutput());
-
-	renderer->SetBackground(0.1, 0.2, 0.3);
-
-	renderWindow->AddRenderer(renderer);
-	renderWindow->SetSize(500, 500);
-
-	renderWindowInteractor->SetInteractorStyle(interactorStyle);
-	renderWindowInteractor->SetRenderWindow(renderWindow);
-
-	volumeMapper->SetBlendModeToComposite();
-	volumeMapper->SetRequestedRenderModeToGPU();
-	volumeMapper->SetInputData(imageData);
-
-	volumeProperty->ShadeOn();
-	volumeProperty->SetInterpolationTypeToLinear();
-
-	volumeProperty->SetAmbient(0.1);
-	volumeProperty->SetDiffuse(0.9);
-	volumeProperty->SetSpecular(0.2);
-	volumeProperty->SetSpecularPower(10.0);
-
-	gradientOpacity->AddPoint(0.0, 0.0);
-	gradientOpacity->AddPoint(2000.0, 1.0);
-	volumeProperty->SetGradientOpacity(gradientOpacity);
-
-	scalarOpacity->AddPoint(-800.0, 0.0);
-	scalarOpacity->AddPoint(-750.0, 1.0);
-	scalarOpacity->AddPoint(-350.0, 1.0);
-	scalarOpacity->AddPoint(-300.0, 0.0);
-	scalarOpacity->AddPoint(-200.0, 0.0);
-	scalarOpacity->AddPoint(-100.0, 1.0);
-	scalarOpacity->AddPoint(1000.0, 0.0);
-	scalarOpacity->AddPoint(2750.0, 0.0);
-	scalarOpacity->AddPoint(2976.0, 1.0);
-	scalarOpacity->AddPoint(3000.0, 0.0);
-	volumeProperty->SetScalarOpacity(scalarOpacity);
-
-	color->AddRGBPoint(-750.0, 0.08, 0.05, 0.03);
-	color->AddRGBPoint(-350.0, 0.39, 0.25, 0.16);
-	color->AddRGBPoint(-200.0, 0.80, 0.80, 0.80);
-	color->AddRGBPoint(2750.0, 0.70, 0.70, 0.70);
-	color->AddRGBPoint(3000.0, 0.35, 0.35, 0.35);
-	volumeProperty->SetColor(color);
-
-	volume->SetMapper(volumeMapper);
-	volume->SetProperty(volumeProperty);
-	renderer->AddVolume(volume);
-	renderer->ResetCamera();
-
-	renderWindow->Render();
-	renderWindowInteractor->Start();
-
-
-
-	*/
-
-
-/*
-	
-	
-	vtkNew<vtkNamedColors> colors;
-
-	std::array<unsigned char, 4> bkg{ {51, 77, 102, 255} };
-	colors->SetColor("BkgColor", bkg.data());
-
-	// Create the renderer, the render window, and the interactor. The renderer
-	// draws into the render window, the interactor enables mouse- and
-	// keyboard-based interaction with the scene.
-	vtkNew<vtkRenderer> ren;
-	vtkNew<vtkRenderWindow> renWin;
-	renWin->AddRenderer(ren);
-	vtkNew<vtkRenderWindowInteractor> iren;
-	iren->SetRenderWindow(renWin);
-
-	// The following reader is used to read a series of 2D slices (images)
-	// that compose the volume. The slice dimensions are set, and the
-	// pixel spacing. The data Endianness must also be specified. The reader
-	// uses the FilePrefix in combination with the slice number to construct
-	// filenames using the format FilePrefix.%d. (In this case the FilePrefix
-	// is the root name of the file: quarter.)
-	vtkNew<vtkStringArray>CK;
-	for (int i = 0; i < DICOM_Names.size();i++) 
-	{
-		CK->InsertValue(i, Full_Path_Names[i]+"\0" );
-		//QMessageBox Well;
-		//QString H = CK->GetValue(i);
-		//Well.setText(H);
-		//Well.exec();
-
-	}
-
-	QMessageBox Weel;
-	Weel.setText(dir.toUtf8().constData());
-	Weel.exec();
-
-	vtkNew<vtkDICOMImageReader> reader;
-	reader->SetDirectoryName(dir.toUtf8().constBegin());
+	 //snprintf(dirname, Full_Path_Names.size(), "%s", dirname);
 	
 
-	// The volume will be displayed by ray-cast alpha compositing.
-	// A ray-cast mapper is needed to do the ray-casting.
-	vtkNew<vtkFixedPointVolumeRayCastMapper> volumeMapper;
-	volumeMapper->SetInputConnection(reader->GetOutputPort());
-	QMessageBox Well2;
-	QString H = CK->GetValue(DICOM_Names.size());
-	Well2.setText(H);
-	Well2.exec();
-	// The color transfer function maps voxel intensities to colors.
-	// It is modality-specific, and often anatomy-specific as well.
-	// The goal is to one color for flesh (between 500 and 1000)
-	// and another color for bone (1150 and over).
-	vtkNew<vtkColorTransferFunction> volumeColor;
-	volumeColor->AddRGBPoint(0, 0.0, 0.0, 0.0);
-	volumeColor->AddRGBPoint(500, 240.0 / 255.0, 184.0 / 255.0, 160.0 / 255.0);
-	volumeColor->AddRGBPoint(1000, 240.0 / 255.0, 184.0 / 255.0, 160.0 / 255.0);
-	volumeColor->AddRGBPoint(1150, 1.0, 1.0, 240.0 / 255.0); // Ivory
+	// Create the renderer, render window and interactor
+	// Parse the parameters
 
-	// The opacity transfer function is used to control the opacity
-	// of different tissue types.
-	vtkNew<vtkPiecewiseFunction> volumeScalarOpacity;
-	volumeScalarOpacity->AddPoint(0, 0.00);
-	volumeScalarOpacity->AddPoint(500, 0.15);
-	volumeScalarOpacity->AddPoint(1000, 0.15);
-	volumeScalarOpacity->AddPoint(1150, 0.85);
-
-	// The gradient opacity function is used to decrease the opacity
-	// in the "flat" regions of the volume while maintaining the opacity
-	// at the boundaries between tissue types. The gradient is measured
-	// as the amount by which the intensity changes over unit distance.
-	// For most medical data, the unit distance is 1mm.
-	vtkNew<vtkPiecewiseFunction> volumeGradientOpacity;
-	volumeGradientOpacity->AddPoint(0, 0.0);
-	volumeGradientOpacity->AddPoint(90, 0.5);
-	volumeGradientOpacity->AddPoint(100, 1.0);
-
-	// The VolumeProperty attaches the color and opacity functions to the
-	// volume, and sets other volume properties. The interpolation should
-	// be set to linear to do a high-quality rendering. The ShadeOn option
-	// turns on directional lighting, which will usually enhance the
-	// appearance of the volume and make it look more "3D". However,
-	// the quality of the shading depends on how accurately the gradient
-	// of the volume can be calculated, and for noisy data the gradient
-	// estimation will be very poor. The impact of the shading can be
-	// decreased by increasing the Ambient coefficient while decreasing
-	// the Diffuse and Specular coefficient. To increase the impact
-	// of shading, decrease the Ambient and increase the Diffuse and Specular.
-	vtkNew<vtkVolumeProperty> volumeProperty;
-	volumeProperty->SetColor(volumeColor);
-	volumeProperty->SetScalarOpacity(volumeScalarOpacity);
-	volumeProperty->SetGradientOpacity(volumeGradientOpacity);
-	volumeProperty->SetInterpolationTypeToLinear();
-	volumeProperty->ShadeOn();
-	volumeProperty->SetAmbient(0.4);
-	volumeProperty->SetDiffuse(0.6);
-	volumeProperty->SetSpecular(0.2);
-
-	// The vtkVolume is a vtkProp3D (like a vtkActor) and controls the position
-	// and orientation of the volume in world coordinates.
-	vtkNew<vtkVolume> volume;
-	volume->SetMapper(volumeMapper);
-	volume->SetProperty(volumeProperty);
-
-	// Finally, add the volume to the renderer
-	ren->AddViewProp(volume);
-
-	// Set up an initial view of the volume. The focal point will be the
-	// center of the volume, and the camera position will be 400mm to the
-	// patient's left (which is our right).
-	vtkCamera* camera = ren->GetActiveCamera();
-	double* c = volume->GetCenter();
-	camera->SetViewUp(0, 0, -1);
-	camera->SetPosition(c[0], c[1] - 400, c[2]);
-	camera->SetFocalPoint(c[0], c[1], c[2]);
-	camera->Azimuth(30.0);
-	camera->Elevation(30.0);
-
-	// Set a background color for the renderer
-	ren->SetBackground(colors->GetColor3d("BkgColor").GetData());
-
-	// Increase the size of the render window
-	renWin->SetSize(640, 480);
-	renWin->SetWindowName("MedicalDemo4");
-
-	// Interact with the data.
-	renWin->Render();
-	iren->Start();
-	*/
-
-
-
-
-vtkNew<vtkNamedColors> colors;
-
-// Verify input arguments
 	
-	std::string folder = dir.toUtf8().constData();
-// std::string folder = "C:\\VTK\\vtkdata-5.8.0\\Data\\DicomTestImages";
 
-// Read all the DICOM files in the specified directory.
-	vtkNew<vtkDICOMImageReader> reader;
-	reader->SetDirectoryName(folder.c_str());
-	reader->Update();
-/*
-// Visualize
-	vtkNew<vtkImageViewer2> imageViewer;
-	imageViewer->SetInputConnection(reader->GetOutputPort());
+	 std::string theadder = "-DICOM";
+	 int argc = 3;
+	 const char * argv[2];
+	 argv[1] = theadder.c_str();
+	 argv[2] = welldoe.c_str();
 
-// slice status message
-	vtkNew<vtkTextProperty> sliceTextProp;
-	sliceTextProp->SetFontFamilyToCourier();
-sliceTextProp->SetFontSize(20);
-sliceTextProp->SetVerticalJustificationToBottom();
-sliceTextProp->SetJustificationToLeft();
+	 
+		 if (!strcmp(argv[count], "?"))
+		 {
+			 PrintUsage();
+			 exit(EXIT_SUCCESS);
+		 }
+		 else if (!strcmp(argv[count], "-DICOM"))
+		 {
+			 QMessageBox t;
+			 t.setText("Okay");
+			 t.exec();
+			 size_t size = strlen(argv[count + 1]) + 1;
+			 dirname = new char[size];
+			 snprintf(dirname, size, "%s", argv[count + 1]);
+			 
 
-vtkNew<vtkTextMapper> sliceTextMapper;
-std::string msg = StatusMessage::Format(imageViewer->GetSliceMin(),
-	imageViewer->GetSliceMax());
-sliceTextMapper->SetInput(msg.c_str());
-sliceTextMapper->SetTextProperty(sliceTextProp);
+			 //dirname = dir.toUtf8().constData();
+			 
+		 }
+		 else if (!strcmp(argv[count], "-VTI"))
+		 {
+			 size_t size = strlen(argv[count + 1]) + 1;
+			 fileName = new char[size];
+			 fileType = VTI_FILETYPE;
+			 snprintf(fileName, size, "%s", argv[count + 1]);
+			 count += 2;
+		 }
+		 else if (!strcmp(argv[count], "-MHA"))
+		 {
+			 size_t size = strlen(argv[count + 1]) + 1;
+			 fileName = new char[size];
+			 fileType = MHA_FILETYPE;
+			 snprintf(fileName, size, "%s", argv[count + 1]);
+			 count += 2;
+		 }
+		 else if (!strcmp(argv[count], "-Clip"))
+		 {
+			 clip = 1;
+			 count++;
+		 }
+		 else if (!strcmp(argv[count], "-MIP"))
+		 {
+			 opacityWindow = atof(argv[count + 1]);
+			 opacityLevel = atof(argv[count + 2]);
+			 blendType = 0;
+			 count += 3;
+		 }
+		 else if (!strcmp(argv[count], "-CompositeRamp"))
+		 {
+			 opacityWindow = atof(argv[count + 1]);
+			 opacityLevel = atof(argv[count + 2]);
+			 blendType = 1;
+			 count += 3;
+		 }
+		 else if (!strcmp(argv[count], "-CompositeShadeRamp"))
+		 {
+			 opacityWindow = atof(argv[count + 1]);
+			 opacityLevel = atof(argv[count + 2]);
+			 blendType = 2;
+			 count += 3;
+		 }
+		 else if (!strcmp(argv[count], "-CT_Skin"))
+		 {
+			 blendType = 3;
+			 count += 1;
+		 }
+		 else if (!strcmp(argv[count], "-CT_Bone"))
+		 {
+			 blendType = 4;
+			 count += 1;
+		 }
+		 else if (!strcmp(argv[count], "-CT_Muscle"))
+		 {
+			 blendType = 5;
+			 count += 1;
+		 }
+		 else if (!strcmp(argv[count], "-RGB_Composite"))
+		 {
+			 blendType = 6;
+			 count += 1;
+		 }
+		 else if (!strcmp(argv[count], "-FrameRate"))
+		 {
+			 frameRate = atof(argv[count + 1]);
+			 if (frameRate < 0.01 || frameRate > 60.0)
+			 {
+				 cout << "Invalid frame rate - use a number between 0.01 and 60.0"
+					 << endl;
+				 cout << "Using default frame rate of 10 frames per second." << endl;
+				 frameRate = 10.0;
+			 }
+			 count += 2;
+		 }
+		 else if (!strcmp(argv[count], "-ReductionFactor"))
+		 {
+			 reductionFactor = atof(argv[count + 1]);
+			 if (reductionFactor <= 0.0 || reductionFactor >= 1.0)
+			 {
+				 cout << "Invalid reduction factor - use a number between 0 and 1 "
+					 "(exclusive)"
+					 << endl;
+				 cout << "Using the default of no reduction." << endl;
+				 reductionFactor = 1.0;
+			 }
+			 count += 2;
+		 }
+		 else if (!strcmp(argv[count], "-DependentComponents"))
+		 {
+			 independentComponents = false;
+			 count += 1;
+		 }
+		 else
+		 {
+			 cout << "Unrecognized option: " << argv[count] << endl;
+			 cout << endl;
+			 PrintUsage();
+			 exit(EXIT_FAILURE);
+		 }
+	 
+		 
+		 QMessageBox t21;
+		 t21.setText("Okay21");
+		 t21.exec();
+	 
+	 // Create the renderer, render window and interactor
+	 vtkNew<vtkNamedColors> colors;
+	 vtkNew<vtkRenderer> renderer2;
+	 vtkNew<vtkRenderWindow> renWin;
+	 renWin->AddRenderer(renderer2);
+	 
+	 // Connect it all. Note that funny arithematic on the
+	 // SetDesiredUpdateRate - the vtkRenderWindow divides it
+	 // allocated time across all renderers, and the renderer
+	 // divides it time across all props. If clip is
+	 // true then there are two props
+	 QMessageBox t2;
+	 t2.setText("Okay2");
+	 t2.exec();
+	 vtkNew<vtkRenderWindowInteractor> iren;
+	 iren->SetRenderWindow(renWin);
+	 iren->SetDesiredUpdateRate(frameRate / (1 + clip));
 
-vtkNew<vtkActor2D> sliceTextActor;
-sliceTextActor->SetMapper(sliceTextMapper);
-sliceTextActor->SetPosition(15, 10);
+	 iren->GetInteractorStyle()->SetDefaultRenderer(renderer2);
+	 
+	 QMessageBox t5;
+	 t5.setText("Okay5");
+	 t5.exec();
+	 // Read the data
+	 vtkSmartPointer<vtkAlgorithm> reader;
+	 vtkSmartPointer<vtkImageData> input;
+	 
+	 QMessageBox t4;
+	 t4.setText("Okay4");
+	 t4.exec();
+	
+	 
+		 vtkNew<vtkDICOMImageReader> dicomReader;
+		 dicomReader->SetDirectoryName(dir.toUtf8().constData());
+		 dicomReader->Update();
+		 input = dicomReader->GetOutput();
+		 reader = dicomReader;
 
-// usage hint message
-vtkNew<vtkTextProperty> usageTextProp;
-usageTextProp->SetFontFamilyToCourier();
-usageTextProp->SetFontSize(14);
-usageTextProp->SetVerticalJustificationToTop();
-usageTextProp->SetJustificationToLeft();
+		 QMessageBox t43;
+		 t43.setText("Okay43");
+		 t43.exec();
 
-vtkNew<vtkTextMapper> usageTextMapper;
-usageTextMapper->SetInput(
-	"- Slice with mouse wheel\n  or Up/Down-Key\n- Zoom with pressed right\n "
-	" mouse button while dragging");
-usageTextMapper->SetTextProperty(usageTextProp);
+	 
+	 
+	 // Verify that we actually have a volume
+	 int dim[3];
+	 input->GetDimensions(dim);
+	 
+	
+	 
+	 vtkNew<vtkImageResample> resample;
+	
+		 resample->SetInputConnection(reader->GetOutputPort());
+		 resample->SetAxisMagnificationFactor(0, reductionFactor);
+		 resample->SetAxisMagnificationFactor(1, reductionFactor);
+		 resample->SetAxisMagnificationFactor(2, reductionFactor);
+	 
 
-vtkNew<vtkActor2D> usageTextActor;
-usageTextActor->SetMapper(usageTextMapper);
-usageTextActor->GetPositionCoordinate()
-->SetCoordinateSystemToNormalizedDisplay();
-usageTextActor->GetPositionCoordinate()->SetValue(0.05, 0.95);
+	 // Create our volume and mapper
+	 vtkNew<vtkVolume> volume;
+	 QMessageBox t3;
+	 t3.setText("Okay3");
+	 t3.exec();
+	 vtkNew<vtkFixedPointVolumeRayCastMapper> mapper;
 
-// create an interactor with our own style (inherit from
-// vtkInteractorStyleImage) in order to catch mousewheel and key events
-vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	 QMessageBox t35656;
+	 t35656.setText("Okay3-1351");
+	 t35656.exec();
+		 mapper->SetInputConnection(resample->GetOutputPort());
+	 
+	
 
-vtkNew<myVtkInteractorStyleImage> myInteractorStyle;
+	 // Set the sample distance on the ray to be 1/2 the average spacing
+	 double spacing[3];
+	 QMessageBox A1;
+	 A1.setText("OkayA");
+	 A1.exec();
+	 if (reductionFactor < 1.0)
+	 {
+		 resample->GetOutput()->GetSpacing(spacing);
+	 }
+	 else
+	 {
+		 input->GetSpacing(spacing);
+	 }
 
-// make imageviewer2 and sliceTextMapper visible to our interactorstyle
-// to enable slice status message updates when scrolling through the slices
-myInteractorStyle->SetImageViewer(imageViewer);
-myInteractorStyle->SetStatusMapper(sliceTextMapper);
+	 //  mapper->SetSampleDistance( (spacing[0]+spacing[1]+spacing[2])/6.0 );
+	 //  mapper->SetMaximumImageSampleDistance(10.0);
 
-imageViewer->SetupInteractor(renderWindowInteractor);
-// make the interactor use our own interactorstyle
-// cause SetupInteractor() is defining it's own default interatorstyle
-// this must be called after SetupInteractor()
-renderWindowInteractor->SetInteractorStyle(myInteractorStyle);
-// add slice status message and usage hint message to the renderer
-imageViewer->GetRenderer()->AddActor2D(sliceTextActor);
-imageViewer->GetRenderer()->AddActor2D(usageTextActor);
+	 // Create our transfer function
+	 vtkNew<vtkColorTransferFunction> colorFun;
+	 vtkNew<vtkPiecewiseFunction> opacityFun;
+	 // Create the property and attach the transfer functions
+	 vtkNew<vtkVolumeProperty> property;
+	 property->SetIndependentComponents(independentComponents);
+	 property->SetColor(colorFun);
+	 property->SetScalarOpacity(opacityFun);
+	 property->SetInterpolationTypeToLinear();
+	 QMessageBox A2;
+	 A2.setText("OkayA2");
+	 A2.exec();
+	 // connect up the volume to the property and the mapper
+	 volume->SetProperty(property);
+	 volume->SetMapper(mapper);
 
-// initialize rendering and interaction
-imageViewer->Render();
-imageViewer->GetRenderer()->ResetCamera();
-imageViewer->GetRenderer()->SetBackground(
-colors->GetColor3d("SlateGray").GetData());
-imageViewer->GetRenderWindow()->SetSize(800, 800);
-imageViewer->GetRenderWindow()->SetWindowName("ReadDICOMSeries");
-imageViewer->Render();
-renderWindowInteractor->Start();
+	 // Depending on the blend type selected as a command line option,
+	 // adjust the transfer function
+	 switch (blendType)
+	 {
+		 // MIP
+		 // Create an opacity ramp from the window and level values.
+		 // Color is white. Blending is MIP.
+	 case 0:
+		 colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0);
+		 opacityFun->AddSegment(opacityLevel - 0.5 * opacityWindow, 0.0,
+			 opacityLevel + 0.5 * opacityWindow, 1.0);
+		 mapper->SetBlendModeToMaximumIntensity();
+		 break;
+
+		 // CompositeRamp
+		 // Create a ramp from the window and level values. Use compositing
+		 // without shading. Color is a ramp from black to white.
+	 case 1:
+		 colorFun->AddRGBSegment(opacityLevel - 0.5 * opacityWindow, 0.0, 0.0, 0.0,
+			 opacityLevel + 0.5 * opacityWindow, 1.0, 1.0, 1.0);
+		 opacityFun->AddSegment(opacityLevel - 0.5 * opacityWindow, 0.0,
+			 opacityLevel + 0.5 * opacityWindow, 1.0);
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOff();
+		 break;
+
+		 // CompositeShadeRamp
+		 // Create a ramp from the window and level values. Use compositing
+		 // with shading. Color is white.
+	 case 2:
+		 colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0);
+		 opacityFun->AddSegment(opacityLevel - 0.5 * opacityWindow, 0.0,
+			 opacityLevel + 0.5 * opacityWindow, 1.0);
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOn();
+		 break;
+
+		 // CT_Skin
+		 // Use compositing and functions set to highlight skin in CT data
+		 // Not for use on RGB data
+	 case 3:
+		 colorFun->AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0);
+		 colorFun->AddRGBPoint(-1000, .62, .36, .18, 0.5, 0.0);
+		 colorFun->AddRGBPoint(-500, .88, .60, .29, 0.33, 0.45);
+		 colorFun->AddRGBPoint(3071, .83, .66, 1, 0.5, 0.0);
+
+		 opacityFun->AddPoint(-3024, 0, 0.5, 0.0);
+		 opacityFun->AddPoint(-1000, 0, 0.5, 0.0);
+		 opacityFun->AddPoint(-500, 1.0, 0.33, 0.45);
+		 opacityFun->AddPoint(3071, 1.0, 0.5, 0.0);
+
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOn();
+		 property->SetAmbient(0.1);
+		 property->SetDiffuse(0.9);
+		 property->SetSpecular(0.2);
+		 property->SetSpecularPower(10.0);
+		 property->SetScalarOpacityUnitDistance(0.8919);
+		 break;
+
+		 // CT_Bone
+		 // Use compositing and functions set to highlight bone in CT data
+		 // Not for use on RGB data
+	 case 4:
+		 colorFun->AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0);
+		 colorFun->AddRGBPoint(-16, 0.73, 0.25, 0.30, 0.49, .61);
+		 colorFun->AddRGBPoint(641, .90, .82, .56, .5, 0.0);
+		 colorFun->AddRGBPoint(3071, 1, 1, 1, .5, 0.0);
+
+		 opacityFun->AddPoint(-3024, 0, 0.5, 0.0);
+		 opacityFun->AddPoint(-16, 0, .49, .61);
+		 opacityFun->AddPoint(641, .72, .5, 0.0);
+		 opacityFun->AddPoint(3071, .71, 0.5, 0.0);
+
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOn();
+		 property->SetAmbient(0.1);
+		 property->SetDiffuse(0.9);
+		 property->SetSpecular(0.2);
+		 property->SetSpecularPower(10.0);
+		 property->SetScalarOpacityUnitDistance(0.8919);
+		 break;
+
+		 // CT_Muscle
+		 // Use compositing and functions set to highlight muscle in CT data
+		 // Not for use on RGB data
+	 case 5:
+		 colorFun->AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0);
+		 colorFun->AddRGBPoint(-155, .55, .25, .15, 0.5, .92);
+		 colorFun->AddRGBPoint(217, .88, .60, .29, 0.33, 0.45);
+		 colorFun->AddRGBPoint(420, 1, .94, .95, 0.5, 0.0);
+		 colorFun->AddRGBPoint(3071, .83, .66, 1, 0.5, 0.0);
+
+		 opacityFun->AddPoint(-3024, 0, 0.5, 0.0);
+		 opacityFun->AddPoint(-155, 0, 0.5, 0.92);
+		 opacityFun->AddPoint(217, .68, 0.33, 0.45);
+		 opacityFun->AddPoint(420, .83, 0.5, 0.0);
+		 opacityFun->AddPoint(3071, .80, 0.5, 0.0);
+
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOn();
+		 property->SetAmbient(0.1);
+		 property->SetDiffuse(0.9);
+		 property->SetSpecular(0.2);
+		 property->SetSpecularPower(10.0);
+		 property->SetScalarOpacityUnitDistance(0.8919);
+		 break;
+
+		 // RGB_Composite
+		 // Use compositing and functions set to highlight red/green/blue regions
+		 // in RGB data. Not for use on single component data
+	 case 6:
+		 opacityFun->AddPoint(0, 0.0);
+		 opacityFun->AddPoint(5.0, 0.0);
+		 opacityFun->AddPoint(30.0, 0.05);
+		 opacityFun->AddPoint(31.0, 0.0);
+		 opacityFun->AddPoint(90.0, 0.0);
+		 opacityFun->AddPoint(100.0, 0.3);
+		 opacityFun->AddPoint(110.0, 0.0);
+		 opacityFun->AddPoint(190.0, 0.0);
+		 opacityFun->AddPoint(200.0, 0.4);
+		 opacityFun->AddPoint(210.0, 0.0);
+		 opacityFun->AddPoint(245.0, 0.0);
+		 opacityFun->AddPoint(255.0, 0.5);
+
+		 mapper->SetBlendModeToComposite();
+		 property->ShadeOff();
+		 property->SetScalarOpacityUnitDistance(1.0);
+		 break;
+	 default:
+		 vtkGenericWarningMacro("Unknown blend type.");
+		 break;
+	 }
+
+	 // Set the default window size
+	 renWin->SetSize(600, 600);
+	 renWin->SetWindowName("FixedPointVolumeRayCastMapperCT");
+	 renWin->Render();
+
+	 // Add the volume to the scene
+	 renderer2->AddVolume(volume);
+
+	 renderer2->ResetCamera();
+	 renderer2->SetBackground(colors->GetColor3d("0").GetData());
+
+	 auto camera = renderer2->GetActiveCamera();
+	 camera->SetPosition(56.8656, -297.084, 78.913);
+	 camera->SetFocalPoint(109.139, 120.604, 63.5486);
+	 camera->SetViewUp(-0.00782421, -0.0357807, -0.999329);
+	 camera->SetDistance(421.227);
+	 camera->SetClippingRange(146.564, 767.987);
+
+	 // interact with data
+	 renWin->Render();
+
+	 iren->Start();
+	
 
 
-*/
-
-
-vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-vtkSmartPointer<vtkRenderWindow> renderWindow = vtkSmartPointer<vtkRenderWindow>::New();
-vtkSmartPointer<vtkRenderer> renderer = vtkSmartPointer<vtkRenderer>::New();
-vtkSmartPointer<vtkInteractorStyleTrackballCamera> interactorStyle = vtkSmartPointer<vtkInteractorStyleTrackballCamera>::New();
-vtkSmartPointer<vtkRenderWindowInteractor> renderWindowInteractor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-vtkSmartPointer<vtkSmartVolumeMapper> volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
-vtkSmartPointer<vtkVolumeProperty> volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
-vtkSmartPointer<vtkPiecewiseFunction> gradientOpacity = vtkSmartPointer<vtkPiecewiseFunction>::New();
-vtkSmartPointer<vtkPiecewiseFunction> scalarOpacity = vtkSmartPointer<vtkPiecewiseFunction>::New();
-vtkSmartPointer<vtkColorTransferFunction> color = vtkSmartPointer<vtkColorTransferFunction>::New();
-vtkSmartPointer<vtkVolume> volume = vtkSmartPointer<vtkVolume>::New();
-
-
-vtkNew<vtkImageViewer2> imageViewer;
-imageViewer->SetInputConnection(reader->GetOutputPort());
-imageViewer->SetInputData(reader->GetOutput());
-
-
-renderer->SetBackground(0.1, 0.2, 0.3);
-
-renderWindow->AddRenderer(renderer);
-renderWindow->SetSize(500, 500);
-
-renderWindowInteractor->SetInteractorStyle(interactorStyle);
-renderWindowInteractor->SetRenderWindow(renderWindow);
-
-volumeMapper->SetBlendModeToComposite();
-volumeMapper->SetRequestedRenderModeToGPU();
-volumeMapper->SetInputData(imageViewer->GetInput());
-
-volumeProperty->ShadeOn();
-volumeProperty->SetInterpolationTypeToLinear();
-
-volumeProperty->SetAmbient(0.1);
-volumeProperty->SetDiffuse(0.9);
-volumeProperty->SetSpecular(0.2);
-volumeProperty->SetSpecularPower(10.0);
-
-gradientOpacity->AddPoint(0.0, 0.0);
-gradientOpacity->AddPoint(2000.0, 1.0);
-volumeProperty->SetGradientOpacity(gradientOpacity);
-
-scalarOpacity->AddPoint(-800.0, 0.0);
-scalarOpacity->AddPoint(-750.0, 1.0);
-scalarOpacity->AddPoint(-350.0, 1.0);
-scalarOpacity->AddPoint(-300.0, 0.0);
-scalarOpacity->AddPoint(-200.0, 0.0);
-scalarOpacity->AddPoint(-100.0, 1.0);
-scalarOpacity->AddPoint(1000.0, 0.0);
-scalarOpacity->AddPoint(2750.0, 0.0);
-scalarOpacity->AddPoint(2976.0, 1.0);
-scalarOpacity->AddPoint(3000.0, 0.0);
-volumeProperty->SetScalarOpacity(scalarOpacity);
-
-color->AddRGBPoint(-750.0, 0.08, 0.05, 0.03);
-color->AddRGBPoint(-350.0, 0.39, 0.25, 0.16);
-color->AddRGBPoint(-200.0, 0.80, 0.80, 0.80);
-color->AddRGBPoint(2750.0, 0.70, 0.70, 0.70);
-color->AddRGBPoint(3000.0, 0.35, 0.35, 0.35);
-volumeProperty->SetColor(color);
-
-volume->SetMapper(volumeMapper);
-volume->SetProperty(volumeProperty);
-renderer->AddVolume(volume);
-renderer->ResetCamera();
-
-renderWindow->Render();
-renderWindowInteractor->Start();
-
-
-
-
+	
 
 
 }
