@@ -1378,8 +1378,7 @@ void MainWindow::SLICERER()
 	 renderer2->ResetCameraClippingRange();
 	 // Initialize the event loop and then start it.
 	 iren->Initialize();
-	 iren->Start();
-
+	 iren->Start();
 
 	 */
 

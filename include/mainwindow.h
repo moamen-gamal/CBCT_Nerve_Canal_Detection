@@ -22,6 +22,8 @@ private:
 	vtkSmartPointer<vtkRenderer> mRenderer;
 	vtkSmartPointer<QVTKInteractor> mInteractor;
 	vtkSmartPointer<vtkInteractorStyle> mInteractorStyle;
+	
+	
 	int mMinSliderX;
 
 	int mMaxSliderX;
@@ -33,8 +35,9 @@ public slots:
 	void onDrawSphereClick();
 	void onDrawSphere2Click();
 	void TweakTheDicom();
-
-
+	void Gaussin_Filter();
+	void OpenSTLER();
+	void SLICERER();
 };
 
 #endif // MAINWINDOW_H
