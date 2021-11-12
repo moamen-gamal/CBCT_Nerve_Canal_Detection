@@ -33,6 +33,9 @@
 #include <vtkSTLReader.h>
 
 
+
+
+
 #include <vtkActor.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
@@ -229,10 +232,16 @@
 #include <vtkVersion.h>
 #include <vtkVolume16Reader.h>
 
+
+
 #include <vtkContourFilter.h>
 #include <vtkPolyDataNormals.h>
 #include <vtkImageProperty.h>
 #include <vtkMedicalImageProperties.h>
+
+
+
+
 
 
 
@@ -280,7 +289,20 @@
 #include <iostream>
 #include <vector>
 
-
+#include <vtkActor.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkObjectFactory.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+// headers needed for this example
+#include <vtkActor2D.h>
+#include <vtkDICOMImageReader.h>
+#include <vtkImageViewer2.h>
+#include <vtkInteractorStyleImage.h>
+#include <vtkTextMapper.h>
+#include <vtkTextProperty.h>
 
 
 
@@ -404,7 +426,132 @@ namespace {
 	 * Careful placement is needed here.
 	 * @return The text actors.
 	 */
+/*
 	std::vector<vtkSmartPointer<vtkActor>> AddTextToPlanes();
+
+
+
+	// helper class to format slice status message
+	class StatusMessage
+	{
+	public:
+		static std::string Format(int slice, int maxSlice)
+		{
+			std::stringstream tmp;
+			tmp << "Slice Number  " << slice + 1 << "/" << maxSlice + 1;
+			return tmp.str();
+		}
+	};
+
+	// Define own interaction style
+	class myVtkInteractorStyleImage : public vtkInteractorStyleImage
+	{
+	public:
+		static myVtkInteractorStyleImage* New();
+		vtkTypeMacro(myVtkInteractorStyleImage, vtkInteractorStyleImage);
+
+	protected:
+		vtkImageViewer2* _ImageViewer;
+		vtkTextMapper* _StatusMapper;
+		int _Slice;
+		int _MinSlice;
+		int _MaxSlice;
+
+	public:
+		void SetImageViewer(vtkImageViewer2* imageViewer)
+		{
+			_ImageViewer = imageViewer;
+			_MinSlice = imageViewer->GetSliceMin();
+			_MaxSlice = imageViewer->GetSliceMax();
+			_Slice = _MinSlice;
+			cout << "Slicer: Min = " << _MinSlice << ", Max = " << _MaxSlice
+				<< std::endl;
+		}
+
+		void SetStatusMapper(vtkTextMapper* statusMapper)
+		{
+			_StatusMapper = statusMapper;
+		}
+
+	protected:
+		void MoveSliceForward()
+		{
+			if (_Slice < _MaxSlice)
+			{
+				_Slice += 1;
+				cout << "MoveSliceForward::Slice = " << _Slice << std::endl;
+				_ImageViewer->SetSlice(_Slice);
+				std::string msg = StatusMessage::Format(_Slice, _MaxSlice);
+				_StatusMapper->SetInput(msg.c_str());
+				_ImageViewer->Render();
+			}
+		}
+
+		void MoveSliceBackward()
+		{
+			if (_Slice > _MinSlice)
+			{
+				_Slice -= 1;
+				cout << "MoveSliceBackward::Slice = " << _Slice << std::endl;
+				_ImageViewer->SetSlice(_Slice);
+				std::string msg = StatusMessage::Format(_Slice, _MaxSlice);
+				_StatusMapper->SetInput(msg.c_str());
+				_ImageViewer->Render();
+			}
+		}
+
+		virtual void OnKeyDown()
+		{
+			std::string key = this->GetInteractor()->GetKeySym();
+			if (key.compare("Up") == 0)
+			{
+				// cout << "Up arrow key was pressed." << endl;
+				MoveSliceForward();
+			}
+			else if (key.compare("Down") == 0)
+			{
+				// cout << "Down arrow key was pressed." << endl;
+				MoveSliceBackward();
+			}
+			// forward event
+			vtkInteractorStyleImage::OnKeyDown();
+		}
+
+		virtual void OnMouseWheelForward()
+		{
+			// std::cout << "Scrolled mouse wheel forward." << std::endl;
+			MoveSliceForward();
+			// don't forward events, otherwise the image will be zoomed
+			// in case another interactorstyle is used (e.g. trackballstyle, ...)
+			// vtkInteractorStyleImage::OnMouseWheelForward();
+		}
+
+		virtual void OnMouseWheelBackward()
+		{
+			// std::cout << "Scrolled mouse wheel backward." << std::endl;
+			if (_Slice > _MinSlice)
+			{
+				MoveSliceBackward();
+			}
+			// don't forward events, otherwise the image will be zoomed
+			// in case another interactorstyle is used (e.g. trackballstyle, ...)
+			// vtkInteractorStyleImage::OnMouseWheelBackward();
+		}
+	};
+
+	vtkStandardNewMacro(myVtkInteractorStyleImage);
+
+
+
+
+
+
+
+
+	*/
+
+
+
 
 
 } // namespace
@@ -448,7 +595,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	
 
-  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(onDeleteThies()));
+  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(onDrawSphere2Click()));
   connect(ui->actionbone, SIGNAL(triggered()), this, SLOT(ChageABoneSLICERER()));
   connect(ui->actionMIP, SIGNAL(triggered()), this, SLOT(ChangeASLICERER()));
   connect(ui->actionskeletal, SIGNAL(triggered()), this, SLOT(ChangeSKESLICERER()));
@@ -465,6 +612,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
 	QObject::connect(ui->horizontalSlider, &QSlider::valueChanged,
 		this, &MainWindow::TweakTheDicom);
+
+	QObject::connect(ui->horizontalSlider_2, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheDicom2);
+
+	QObject::connect(ui->horizontalSlider_3, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheDicom3);
 
 	QObject::connect(ui->horizontalSlider_5, &QSlider::valueChanged,
 		this, &MainWindow::TweakTheIntensity);
@@ -571,7 +724,7 @@ void MainWindow::onDrawSphereClick() {
 
 }
 
-
+QString dir3;
 
 void MainWindow::onDrawSphere2Click()
 {
@@ -591,12 +744,12 @@ void MainWindow::onDrawSphere2Click()
 		tr("Dicom Images (*.dcm)")	
 	);
 	*/
-	QString dir = QFileDialog::getExistingDirectory(this, 
+	dir3= QFileDialog::getExistingDirectory(this, 
 		tr("Open Directory"), 
 		"G:\MedicalData",
 		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 
-	QDir  TheDirectory = dir;
+	QDir  TheDirectory = dir3;
 	QStringList DICOMS = TheDirectory.entryList(QStringList() << "*.dcm", QDir::Files);
 	
 
@@ -610,7 +763,7 @@ void MainWindow::onDrawSphere2Click()
 	foreach (QString Dicom, DICOMS)
 	{
 		DICOM_Names.push_back(Dicom.toUtf8().constData());
-		std::string the_path = dir.toStdString() + "\\" + Dicom.toUtf8().constData();
+		std::string the_path = dir3.toStdString() + "\\" + Dicom.toUtf8().constData();
 		Full_Path_Names.push_back(the_path);
 		
 	}
@@ -629,29 +782,65 @@ void MainWindow::onDrawSphere2Click()
 	ui->horizontalSlider->setRange(0, DICOM_Names.size());
 
 	
-	/*
+	
 	// Read all the DICOM files in the specified directory.
 	vtkNew<vtkDICOMImageReader> reader;
-	reader->SetFileName(inputFolderName.toUtf8().constData());
+	reader->SetDirectoryName(dir3.toUtf8().constData());
 	reader->Update();
-	 
 	
 
-	// Visualize
+	auto image = reader->GetOutput();
+	double * range = image->GetPointData()->GetScalars()->GetRange();
+	
+
+	
 	vtkNew<vtkImageViewer2> imageViewer;
+	vtkNew<vtkImageViewer2> imageViewer2;
+	vtkNew<vtkImageViewer2> imageViewer3;
+
+	
+
+
+	imageViewer->SetSliceOrientationToXZ();
+	imageViewer2->SetSliceOrientationToYZ();
+	imageViewer3->SetSliceOrientationToXY();
 	imageViewer->SetInputConnection(reader->GetOutputPort());
+	imageViewer2->SetInputConnection(reader->GetOutputPort());
+	imageViewer3->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	imageViewer->SetupInteractor(mInteractor);
+	imageViewer2->SetupInteractor(mInteractor);
+	imageViewer3->SetupInteractor(mInteractor);
 	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	imageViewer2->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
+	imageViewer3->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
+
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	imageViewer->Render();
+	imageViewer2->Render();
+	imageViewer3->Render();
+	
+
+	imageViewer->SetColorLevel(0.5*(range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);
+	imageViewer2->SetColorLevel(0.5*(range[0] + range[1]));
+	imageViewer2->SetColorWindow(range[1] - range[0]);
+	imageViewer3->SetColorLevel(0.5*(range[0] + range[1]));
+	imageViewer3->SetColorWindow(range[1] - range[0]);
+
+
 	imageViewer->GetRenderer()->ResetCamera();
+	imageViewer2->GetRenderer()->ResetCamera();
+	imageViewer3->GetRenderer()->ResetCamera();
 	imageViewer->Render();
+	imageViewer2->Render();
+	imageViewer3->Render();
 
 	renderWindowInteractor->Start();
-	*/
+	
 
 	
+
 
 
 
@@ -673,7 +862,7 @@ void MainWindow::TweakTheDicom()
 	int y = ui->horizontalSlider->value();
 
 	int n = Full_Path_Names[y].length();
-	char  * converter= &Full_Path_Names[y][0];
+	const char  * converter= &Full_Path_Names[y][0];
 
 
 	
@@ -684,7 +873,8 @@ void MainWindow::TweakTheDicom()
 	//msgBox.setText(z);
 	//msgBox.exec();
 	
-	reader->SetFileName(converter);
+	//reader->SetFileName(converter);
+	reader->SetDirectoryName(dir3.toUtf8().constData());
 	reader->Update();
 	
 	
@@ -720,16 +910,16 @@ void MainWindow::TweakTheDicom()
 	//t.setText( );
 
 
-
+	imageViewer->SetSliceOrientationToXZ();
 	imageViewer->SetInputConnection(reader->GetOutputPort());
-
 	
-	//imageViewer->SetSliceOrientationToXZ();
+	
+	
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	//imageViewer->SetColorLevel(0);
 	imageViewer->SetupInteractor(mInteractor);
 	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
-	
+	imageViewer->Render();
 
 	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
 	imageViewer->SetColorWindow(range[1] - range[0]);
@@ -737,16 +927,268 @@ void MainWindow::TweakTheDicom()
 	//TheStyler->SetPickColor(0);
 	//renderWindowInteractor->SetInteractorStyle(TheStyler);
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+	
 
+	
+	//imageViewer->SetSliceOrientationToYZ();
+	imageViewer->SetSlice(ui->horizontalSlider->value());
+	//imageViewer->Render();
 	//imageViewer->SetColorLevel(172);
-	imageViewer->Render();
+	//imageViewer->Render();
+	
+	//imageViewer->Render();
+	//imageViewer->SetSliceOrientation(imageViewer->GetSliceOrientation());
+	//imageViewer->SetSliceOrientationToYZ();
 	imageViewer->GetRenderer()->ResetCamera();
+	
 	imageViewer->Render();
-
+	
 	renderWindowInteractor->Start();
 	
 
 }
+
+
+
+
+
+
+
+void MainWindow::TweakTheDicom2()
+{
+	double zeer[6];
+	vtkNew<vtkDICOMImageReader> reader;
+
+	//double wow = 0;
+	//double * rour = &wow ;
+	//reader->SetDataDirection(rour);
+	//reader->GetDataByteOrder();
+
+
+
+	int y = ui->horizontalSlider->value();
+
+	int n = Full_Path_Names[y].length();
+	const char  * converter = &Full_Path_Names[y][0];
+
+
+
+
+	//QMessageBox msgBox;
+	//char *converter = (Full_Path_Names[y]).c_str();
+	QString z = QString::fromStdString(converter);
+	//msgBox.setText(z);
+	//msgBox.exec();
+
+	//reader->SetFileName(converter);
+	reader->SetDirectoryName(dir3.toUtf8().constData());
+	reader->Update();
+
+
+
+
+
+
+
+
+
+	auto image = reader->GetOutput();
+	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
+
+
+
+	vtkNew<vtkColorTransferFunction> colorFun;
+	vtkNew<vtkPiecewiseFunction> opacityFun;
+	// Create the property and attach the transfer functions
+	//vtkNew<vtkImageProperty> property;
+	//property->SetIndependentComponents(true);
+	//property->SetColor(colorFun);
+	//property->SetScalarOpacity(opacityFun);
+	//property->SetInterpolationTypeToLinear();
+
+	//vtkNew<vtkInteractorStyleImage>TheStyler;
+
+	// Visualize
+	vtkNew<vtkImageViewer2> imageViewer;
+
+	//vtkNew<vtkAlgorithmOutput> theOutput;
+	//theOutput.Get( = *(reader->GetOutputPort();
+	//QMessageBox t;
+	//t.setText( );
+
+
+	imageViewer->SetSliceOrientationToYZ();
+	imageViewer->SetInputConnection(reader->GetOutputPort());
+
+
+
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	//imageViewer->SetColorLevel(0);
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
+	imageViewer->Render();
+
+	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);
+
+	//TheStyler->SetPickColor(0);
+	//renderWindowInteractor->SetInteractorStyle(TheStyler);
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+
+
+
+	//imageViewer->SetSliceOrientationToYZ();
+	imageViewer->SetSlice(ui->horizontalSlider_2->value());
+	//imageViewer->Render();
+	//imageViewer->SetColorLevel(172);
+	//imageViewer->Render();
+
+	//imageViewer->Render();
+	//imageViewer->SetSliceOrientation(imageViewer->GetSliceOrientation());
+	//imageViewer->SetSliceOrientationToYZ();
+	imageViewer->GetRenderer()->ResetCamera();
+
+	imageViewer->Render();
+
+	renderWindowInteractor->Start();
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+void MainWindow::TweakTheDicom3()
+{
+	double zeer[6];
+	vtkNew<vtkDICOMImageReader> reader;
+
+	//double wow = 0;
+	//double * rour = &wow ;
+	//reader->SetDataDirection(rour);
+	//reader->GetDataByteOrder();
+
+
+
+	int y = ui->horizontalSlider->value();
+
+	int n = Full_Path_Names[y].length();
+	const char  * converter = &Full_Path_Names[y][0];
+
+
+
+
+	//QMessageBox msgBox;
+	//char *converter = (Full_Path_Names[y]).c_str();
+	QString z = QString::fromStdString(converter);
+	//msgBox.setText(z);
+	//msgBox.exec();
+
+	//reader->SetFileName(converter);
+	reader->SetDirectoryName(dir3.toUtf8().constData());
+	reader->Update();
+
+
+
+
+
+
+
+
+
+	auto image = reader->GetOutput();
+	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
+
+
+
+	vtkNew<vtkColorTransferFunction> colorFun;
+	vtkNew<vtkPiecewiseFunction> opacityFun;
+	// Create the property and attach the transfer functions
+	//vtkNew<vtkImageProperty> property;
+	//property->SetIndependentComponents(true);
+	//property->SetColor(colorFun);
+	//property->SetScalarOpacity(opacityFun);
+	//property->SetInterpolationTypeToLinear();
+
+	//vtkNew<vtkInteractorStyleImage>TheStyler;
+
+	// Visualize
+	vtkNew<vtkImageViewer2> imageViewer;
+
+	//vtkNew<vtkAlgorithmOutput> theOutput;
+	//theOutput.Get( = *(reader->GetOutputPort();
+	//QMessageBox t;
+	//t.setText( );
+
+
+	imageViewer->SetSliceOrientationToXY();
+	imageViewer->SetInputConnection(reader->GetOutputPort());
+
+
+
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	//imageViewer->SetColorLevel(0);
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
+	imageViewer->Render();
+
+	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);
+
+	//TheStyler->SetPickColor(0);
+	//renderWindowInteractor->SetInteractorStyle(TheStyler);
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+
+
+
+	//imageViewer->SetSliceOrientationToYZ();
+	imageViewer->SetSlice(ui->horizontalSlider_3->value());
+	//imageViewer->Render();
+	//imageViewer->SetColorLevel(172);
+	//imageViewer->Render();
+
+	//imageViewer->Render();
+	//imageViewer->SetSliceOrientation(imageViewer->GetSliceOrientation());
+	//imageViewer->SetSliceOrientationToYZ();
+	imageViewer->GetRenderer()->ResetCamera();
+
+	imageViewer->Render();
+
+	renderWindowInteractor->Start();
+
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 void MainWindow::Gaussin_Filter()
 {
@@ -906,6 +1348,7 @@ void MainWindow::Gaussin_Filter()
 	filteredActor->GetProperty()->SetColorWindow(range[1] - range[0]);
 	originalActor->GetProperty()->SetColorLevel(0.5 * (range[0] + range[1]));
 	originalActor->GetProperty()->SetColorWindow(range[1] - range[0]);
+	//originalActor->RotateWXYZ(90, 0, 90, 0);
 
 	// Setup renderers
 	vtkNew<vtkRenderer> originalRenderer;
@@ -915,6 +1358,8 @@ void MainWindow::Gaussin_Filter()
 	originalRenderer->ResetCamera();
 	originalRenderer->SetBackground(colors->GetColor3d("0").GetData());
 
+
+	
 	vtkNew<vtkRenderer> filteredRenderer;
 	filteredRenderer->SetViewport(filteredViewport);
 	filteredRenderer->AddActor(filteredActor);
@@ -1615,8 +2060,7 @@ void MainWindow::SLICERER()
 	 renderer2->ResetCameraClippingRange();
 	 // Initialize the event loop and then start it.
 	 iren->Initialize();
-	 iren->Start();
-
+	 iren->Start();
 	 */
 
 
@@ -1740,368 +2184,98 @@ void MainWindow::TweakTheIntensity()
 }
 
 void MainWindow::onDeleteThies() 
-{
-
-	QString inputFolderName = QFileDialog::getOpenFileName(
-		this,
-		"Open a Folder",
+{/*
+	QString dir2 = QFileDialog::getExistingDirectory(this,
+		tr("Open Directory"),
 		"G:\MedicalData",
-		tr("Dicom Images (*.stl)")
-	);
-
-
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
 	
-	std::string fileName(inputFolderName.toUtf8().constData());
-
 	vtkNew<vtkNamedColors> colors;
 
-	// Create the rendering window, renderer, and interactive renderer.
-	vtkNew<vtkRenderer> ren;
-	vtkNew<vtkRenderWindow> renWin;
-	renWin->SetSize(780, 780);
-	renWin->AddRenderer(ren);
-	vtkNew<vtkRenderWindowInteractor> iren;
-	iren->SetRenderWindow(renWin);
+	std::string folder = dir2.toUtf8().constData();
+	// std::string folder = "C:\\VTK\\vtkdata-5.8.0\\Data\\DicomTestImages";
 
-	// Make an annotated cube actor with axes and then add it into an orientation
-	// marker widget.
-	// Three of these need to be made.
-
-	// Right Posterior Superior
-	std::array<std::string, 3> xyzLabels{ {"X", "Y", "Z"} };
-	std::array<double, 3> scale{ {10.5, -1.5, 1.5} };
-	auto axes = MakeCubeActor(scale, xyzLabels, colors);
-	vtkNew<vtkOrientationMarkerWidget> om;
-	om->SetOrientationMarker(axes);
-	// Position upper left in the viewport.
-	om->SetViewport(5.0, 0.8, 0.2, 1.0);
-	om->SetInteractor(iren);
-	om->EnabledOn();
-	om->InteractiveOn();
-
-	// Right, Anterior, Superior.
-	std::array<double, 3> scale1{ {1.5, 1.5, 1.5} };
-	auto axes1 = MakeCubeActor(scale1, xyzLabels, colors);
-	vtkNew<vtkOrientationMarkerWidget> om1;
-	om1->SetOrientationMarker(axes1);
-	// Position lower left in the viewport.
-	om1->SetViewport(0, 0, 0.2, 0.2);
-	om1->SetInteractor(iren);
-	om1->EnabledOn();
-	om1->InteractiveOn();
-
-	// Left, Posterior, Superior.
-	std::array<double, 3> scale2{ {-1.5, -1.5, 1.5} };
-	auto axes2 = MakeCubeActor(scale2, xyzLabels, colors);
-	vtkNew<vtkOrientationMarkerWidget> om2;
-	om2->SetOrientationMarker(axes2);
-	// Position lower right in the viewport.
-	om2->SetViewport(0.8, 0, 1.0, 0.2);
-	om2->SetInteractor(iren);
-	om2->EnabledOn();
-	om2->InteractiveOn();
-
-	// Finally create an annotated cube actor adding it into an orientation marker
-	// widget.
-	auto axes3 = MakeAnnotatedCubeActor(colors);
-	vtkNew<vtkOrientationMarkerWidget> om3;
-	om3->SetOrientationMarker(axes3);
-	// Position upper right in the viewport.
-	om3->SetViewport(0.8, 0.8, 1.0, 1.0);
-	om3->SetInteractor(iren);
-	om3->EnabledOn();
-	om3->InteractiveOn();
-
-	// Read in the model.
-	vtkNew<vtkXMLPolyDataReader> reader;
-	reader->SetFileName(fileName.c_str());
+	// Read all the DICOM files in the specified directory.
+	vtkNew<vtkDICOMImageReader> reader;
+	reader->SetDirectoryName(folder.c_str());
 	reader->Update();
 
-	vtkNew<vtkPolyDataMapper> humanMapper;
-	humanMapper->SetInputConnection(reader->GetOutputPort());
-	humanMapper->SetScalarModeToUsePointFieldData();
-	humanMapper->SelectColorArray("Color");
-	humanMapper->SetColorModeToDirectScalars();
+	// Visualize
+	vtkNew<vtkImageViewer2> imageViewer;
+	imageViewer->SetInputConnection(reader->GetOutputPort());
 
-	vtkNew<vtkActor> humanActor;
-	humanActor->SetMapper(humanMapper);
-	std::vector<double> bounds(6, 0);
-	humanActor->GetBounds(&bounds[0]);
-	std::vector<double>::iterator maxElt =
-		std::max_element(bounds.begin(), bounds.end());
-	// Scale the actor
-	humanActor->SetScale(1.0 / *maxElt);
-	ren->AddActor(humanActor);
+	// slice status message
+	vtkNew<vtkTextProperty> sliceTextProp;
+	sliceTextProp->SetFontFamilyToCourier();
+	sliceTextProp->SetFontSize(20);
+	sliceTextProp->SetVerticalJustificationToBottom();
+	sliceTextProp->SetJustificationToLeft();
 
-	// Make the planes.
-	auto actors = MakePlanesActors(colors);
-	for (auto actor : actors)
-	{
-		ren->AddViewProp(actor);
-	}
+	vtkNew<vtkTextMapper> sliceTextMapper;
+	std::string msg = StatusMessage::Format(imageViewer->GetSliceMin(),
+		imageViewer->GetSliceMax());
+	sliceTextMapper->SetInput(msg.c_str());
+	sliceTextMapper->SetTextProperty(sliceTextProp);
 
-	// Label them.
-	auto textActors = AddTextToPlanes();
-	for (auto actor : textActors)
-	{
-		ren->AddViewProp(actor);
-	}
+	vtkNew<vtkActor2D> sliceTextActor;
+	sliceTextActor->SetMapper(sliceTextMapper);
+	sliceTextActor->SetPosition(15, 10);
 
-	// Interact
-	ren->SetBackground2(colors->GetColor3d("OldLace").GetData());
-	ren->SetBackground(colors->GetColor3d("MistyRose").GetData());
-	ren->GradientBackgroundOn();
-	ren->ResetCamera();
-	ren->GetActiveCamera()->Zoom(1.6);
-	ren->GetActiveCamera()->SetPosition(-2.3, 4.1, 4.2);
-	ren->GetActiveCamera()->SetViewUp(0.0, 0.0, 1.0);
-	ren->ResetCameraClippingRange();
-	renWin->Render();
-	//  Call SetWindowName after renWin.Render() is called.
-	renWin->SetWindowName("AnatomicalOrientation");
+	// usage hint message
+	vtkNew<vtkTextProperty> usageTextProp;
+	usageTextProp->SetFontFamilyToCourier();
+	usageTextProp->SetFontSize(14);
+	usageTextProp->SetVerticalJustificationToTop();
+	usageTextProp->SetJustificationToLeft();
 
-	iren->Initialize();
-	iren->Start();
+	vtkNew<vtkTextMapper> usageTextMapper;
+	usageTextMapper->SetInput(
+		"- Slice with mouse wheel\n  or Up/Down-Key\n- Zoom with pressed right\n "
+		" mouse button while dragging");
+	usageTextMapper->SetTextProperty(usageTextProp);
+
+	vtkNew<vtkActor2D> usageTextActor;
+	usageTextActor->SetMapper(usageTextMapper);
+	usageTextActor->GetPositionCoordinate()
+		->SetCoordinateSystemToNormalizedDisplay();
+	usageTextActor->GetPositionCoordinate()->SetValue(0.05, 0.95);
+
+	// create an interactor with our own style (inherit from
+	// vtkInteractorStyleImage) in order to catch mousewheel and key events
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+
+	vtkNew<myVtkInteractorStyleImage> myInteractorStyle;
+
+	// make imageviewer2 and sliceTextMapper visible to our interactorstyle
+	// to enable slice status message updates when scrolling through the slices
+	myInteractorStyle->SetImageViewer(imageViewer);
+	myInteractorStyle->SetStatusMapper(sliceTextMapper);
+
+	imageViewer->SetupInteractor(renderWindowInteractor);
+	// make the interactor use our own interactorstyle
+	// cause SetupInteractor() is defining it's own default interatorstyle
+	// this must be called after SetupInteractor()
+	renderWindowInteractor->SetInteractorStyle(myInteractorStyle);
+	// add slice status message and usage hint message to the renderer
+	imageViewer->GetRenderer()->AddActor2D(sliceTextActor);
+	imageViewer->GetRenderer()->AddActor2D(usageTextActor);
+
+	// initialize rendering and interaction
+	imageViewer->Render();
+
+	imageViewer->GetRenderer()->ResetCamera();
+	imageViewer->GetRenderer()->SetBackground(
+	colors->GetColor3d("SlateGray").GetData());
+	imageViewer->GetRenderWindow()->SetSize(800, 800);
+	imageViewer->GetRenderWindow()->SetWindowName("ReadDICOMSeries");
+	imageViewer->SetSliceOrientationToXZ();
+	imageViewer->Render();
+	renderWindowInteractor->Start();
 
 
 
 
 
-
-
+	*/
 }
 
-namespace {
-
-	vtkSmartPointer<vtkAxesActor>
-		MakeAxesActor(std::array<double, 3>& scale,
-			std::array<std::string, 3>& xyzLabels)
-	{
-		vtkNew<vtkAxesActor> axes;
-		axes->SetScale(scale[0], scale[1], scale[2]);
-		axes->SetShaftTypeToCylinder();
-		axes->SetXAxisLabelText(xyzLabels[0].c_str());
-		axes->SetYAxisLabelText(xyzLabels[1].c_str());
-		axes->SetZAxisLabelText(xyzLabels[2].c_str());
-		axes->SetCylinderRadius(0.5 * axes->GetCylinderRadius());
-		axes->SetConeRadius(1.025 * axes->GetConeRadius());
-		axes->SetSphereRadius(1.5 * axes->GetSphereRadius());
-		vtkTextProperty* tprop =
-			axes->GetXAxisCaptionActor2D()->GetCaptionTextProperty();
-		tprop->ItalicOn();
-		tprop->ShadowOn();
-		tprop->SetFontFamilyToTimes();
-		// Use the same text properties on the other two axes.
-		axes->GetYAxisCaptionActor2D()->GetCaptionTextProperty()->ShallowCopy(tprop);
-		axes->GetZAxisCaptionActor2D()->GetCaptionTextProperty()->ShallowCopy(tprop);
-		return axes;
-	}
-
-	vtkSmartPointer<vtkAnnotatedCubeActor>
-		MakeAnnotatedCubeActor(vtkNamedColors* colors)
-	{
-		// A cube with labeled faces.
-		vtkNew<vtkAnnotatedCubeActor> cube;
-		cube->SetXPlusFaceText("R");  // Right
-		cube->SetXMinusFaceText("L"); // Left
-		cube->SetYPlusFaceText("A");  // Anterior
-		cube->SetYMinusFaceText("P"); // Posterior
-		cube->SetZPlusFaceText("S");  // Superior/Cranial
-		cube->SetZMinusFaceText("I"); // Inferior/Caudal
-		cube->SetFaceTextScale(0.5);
-		cube->GetCubeProperty()->SetColor(colors->GetColor3d("Gainsboro").GetData());
-
-		cube->GetTextEdgesProperty()->SetColor(
-			colors->GetColor3d("LightSlateGray").GetData());
-
-		// Change the vector text colors.
-		cube->GetXPlusFaceProperty()->SetColor(
-			colors->GetColor3d("Tomato").GetData());
-		cube->GetXMinusFaceProperty()->SetColor(
-			colors->GetColor3d("Tomato").GetData());
-		cube->GetYPlusFaceProperty()->SetColor(
-			colors->GetColor3d("DeepSkyBlue").GetData());
-		cube->GetYMinusFaceProperty()->SetColor(
-			colors->GetColor3d("DeepSkyBlue").GetData());
-		cube->GetZPlusFaceProperty()->SetColor(
-			colors->GetColor3d("SeaGreen").GetData());
-		cube->GetZMinusFaceProperty()->SetColor(
-			colors->GetColor3d("SeaGreen").GetData());
-		return cube;
-	}
-
-	vtkSmartPointer<vtkPropAssembly>
-		MakeCubeActor(std::array<double, 3>& scale,
-			std::array<std::string, 3>& xyzLabels, vtkNamedColors* colors)
-	{
-		// We are combining a vtk.vtkAxesActor and a vtk.vtkAnnotatedCubeActor
-		// into a vtk.vtkPropAssembly
-		vtkSmartPointer<vtkAnnotatedCubeActor> cube = MakeAnnotatedCubeActor(colors);
-		vtkSmartPointer<vtkAxesActor> axes = MakeAxesActor(scale, xyzLabels);
-
-		// Combine orientation markers into one with an assembly.
-		vtkNew<vtkPropAssembly> assembly;
-		assembly->AddPart(axes);
-		assembly->AddPart(cube);
-		return assembly;
-	}
-
-	vtkSmartPointer<vtkTransformPolyDataFilter>
-		MakePlane(std::array<int, 2>& resolution, std::array<double, 3>& origin,
-			std::array<double, 3>& point1, std::array<double, 3>& point2,
-			std::array<double, 4>& wxyz, std::array<double, 3>& translate)
-	{
-		vtkNew<vtkPlaneSource> plane;
-		plane->SetResolution(resolution[0], resolution[1]);
-		plane->SetOrigin(origin.data());
-		plane->SetPoint1(point1.data());
-		plane->SetPoint2(point2.data());
-		vtkNew<vtkTransform> trnf;
-		trnf->RotateWXYZ(wxyz[0], wxyz[1], wxyz[2], wxyz[3]);
-		trnf->Translate(translate.data());
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane;
-		tpdPlane->SetTransform(trnf);
-		tpdPlane->SetInputConnection(plane->GetOutputPort());
-		return tpdPlane;
-	}
-
-	std::vector<vtkSmartPointer<vtkActor>> MakePlanesActors(vtkNamedColors* colors)
-	{
-		std::vector<vtkSmartPointer<vtkTransformPolyDataFilter>> planes;
-		std::vector<vtkSmartPointer<vtkPolyDataMapper>> mappers;
-		std::vector<vtkSmartPointer<vtkActor>> actors;
-
-		// Parameters for a plane lying in the x-y plane.
-		std::array<int, 2> resolution{ {10, 10} };
-		std::array<double, 3> origin{ {0.0, 0.0, 0.0} };
-		std::array<double, 3> point1{ {1, 0, 0} };
-		std::array<double, 3> point2{ {0, 1, 0} };
-
-		std::array<double, 4> wxyz0{ {0, 0, 0, 0} };
-		std::array<double, 3> translate{ {-0.5, -0.5, 0} };
-		std::array<double, 4> wxyz1{ {-90, 1, 0, 0} };
-		std::array<double, 4> wxyz2{ {-90, 0, 1, 0} };
-		planes.push_back(MakePlane(resolution, origin, point1, point2, wxyz0,
-			translate)); // x-y plane
-		planes.push_back(MakePlane(resolution, origin, point1, point2, wxyz1,
-			translate)); // x-z plane
-		planes.push_back(MakePlane(resolution, origin, point1, point2, wxyz2,
-			translate)); // y-z plane
-		for (size_t i = 0; i < planes.size(); ++i)
-		{
-			mappers.push_back(vtkSmartPointer<vtkPolyDataMapper>::New());
-			mappers[i]->SetInputConnection(planes[i]->GetOutputPort());
-			actors.push_back(vtkSmartPointer<vtkActor>::New());
-			actors[i]->SetMapper(mappers[i]);
-		}
-		actors[0]->GetProperty()->SetColor(
-			colors->GetColor3d("SeaGreen").GetData()); // Transverse plane
-		actors[1]->GetProperty()->SetColor(
-			colors->GetColor3d("DeepSkyBlue").GetData()); // Coronal plane
-		actors[2]->GetProperty()->SetColor(
-			colors->GetColor3d("Tomato").GetData()); // Saggital plane
-		return actors;
-	}
-
-	std::vector<vtkSmartPointer<vtkActor>> AddTextToPlanes()
-	{
-		std::vector<vtkSmartPointer<vtkActor>> textActors;
-		std::array<double, 3> scale{ {0.04, 0.04, 0.04} };
-
-		vtkNew<vtkVectorText> text1;
-		text1->SetText("Transverse\nPlane\n\nSuperior\nCranial");
-		vtkNew<vtkTransform> trnf1;
-		trnf1->RotateZ(-90);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane1;
-		tpdPlane1->SetTransform(trnf1);
-		tpdPlane1->SetInputConnection(text1->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper1;
-		textMapper1->SetInputConnection(tpdPlane1->GetOutputPort());
-		vtkNew<vtkActor> textActor1;
-		textActor1->SetMapper(textMapper1);
-		textActor1->SetScale(scale.data());
-		textActor1->AddPosition(0.4, 0.49, 0.01);
-		textActors.push_back(textActor1);
-
-		vtkNew<vtkVectorText> text2;
-		text2->SetText("Transverse\nPlane\n\nInferior\n(Caudal)");
-		vtkNew<vtkTransform> trnf2;
-		trnf2->RotateZ(270);
-		trnf2->RotateWXYZ(180, 0, 1, 0);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane2;
-		tpdPlane2->SetTransform(trnf2);
-		tpdPlane2->SetInputConnection(text2->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper2;
-		textMapper2->SetInputConnection(tpdPlane2->GetOutputPort());
-		vtkNew<vtkActor> textActor2;
-		textActor2->SetMapper(textMapper2);
-		textActor2->SetScale(scale.data());
-		textActor2->AddPosition(0.4, -0.49, -0.01);
-		textActors.push_back(textActor2);
-
-		vtkNew<vtkVectorText> text3;
-		text3->SetText("Sagittal\nPlane\n\nLeft");
-		vtkNew<vtkTransform> trnf3;
-		trnf3->RotateX(90);
-		trnf3->RotateWXYZ(-90, 0, 1, 0);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane3;
-		tpdPlane3->SetTransform(trnf3);
-		tpdPlane3->SetInputConnection(text3->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper3;
-		textMapper3->SetInputConnection(tpdPlane3->GetOutputPort());
-		vtkNew<vtkActor> textActor3;
-		textActor3->SetMapper(textMapper3);
-		textActor3->SetScale(scale.data());
-		textActor3->AddPosition(-0.01, 0.49, 0.4);
-		textActors.push_back(textActor3);
-
-		vtkNew<vtkVectorText> text4;
-		text4->SetText("Sagittal\nPlane\n\nRight");
-		vtkNew<vtkTransform> trnf4;
-		trnf4->RotateX(90);
-		trnf4->RotateWXYZ(-270, 0, 1, 0);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane4;
-		tpdPlane4->SetTransform(trnf4);
-		tpdPlane4->SetInputConnection(text4->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper4;
-		textMapper4->SetInputConnection(tpdPlane4->GetOutputPort());
-		vtkNew<vtkActor> textActor4;
-		textActor4->SetMapper(textMapper4);
-		textActor4->SetScale(scale.data());
-		textActor4->AddPosition(0.01, -0.49, 0.4);
-		textActors.push_back(textActor4);
-
-		vtkNew<vtkVectorText> text5;
-		text5->SetText("Coronal\nPlane\n\nAnterior");
-		vtkNew<vtkTransform> trnf5;
-		trnf5->RotateY(-180);
-		trnf5->RotateWXYZ(-90, 1, 0, 0);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane5;
-		tpdPlane5->SetTransform(trnf5);
-		tpdPlane5->SetInputConnection(text5->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper5;
-		textMapper5->SetInputConnection(tpdPlane5->GetOutputPort());
-		vtkNew<vtkActor> textActor5;
-		textActor5->SetMapper(textMapper5);
-		textActor5->SetScale(scale.data());
-		textActor5->AddPosition(0.49, 0.01, 0.20);
-		textActors.push_back(textActor5);
-
-		vtkNew<vtkVectorText> text6;
-		text6->SetText("Coronal\nPlane\n\nPosterior");
-		vtkNew<vtkTransform> trnf6;
-		trnf6->RotateWXYZ(90, 1, 0, 0);
-		vtkNew<vtkTransformPolyDataFilter> tpdPlane6;
-		tpdPlane6->SetTransform(trnf6);
-		tpdPlane6->SetInputConnection(text6->GetOutputPort());
-		vtkNew<vtkPolyDataMapper> textMapper6;
-		textMapper6->SetInputConnection(tpdPlane6->GetOutputPort());
-		vtkNew<vtkActor> textActor6;
-		textActor6->SetMapper(textMapper6);
-		textActor6->SetScale(scale.data());
-		textActor6->AddPosition(-0.49, -0.01, 0.3);
-		textActors.push_back(textActor6);
-
-		return textActors;
-	}
-}

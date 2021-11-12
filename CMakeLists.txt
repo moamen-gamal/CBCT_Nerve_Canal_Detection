@@ -30,6 +30,7 @@ find_package(VTK COMPONENTS
   vtkRenderingVolume
   vtkRenderingVolumeOpenGL2
   QUIET
+  
 )
 
 #======================= INCLUSION OF VTK ======================#
@@ -77,3 +78,19 @@ vtk_module_autoinit(
     TARGETS QtVTKProject
     MODULES ${VTK_LIBRARIES}
     )
+
+# Find ITK.
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+
+target_link_libraries(QtVTKProject ${ITK_LIBRARIES})
+find_package( OpenCV REQUIRED )
+include_directories( ${OpenCV_INCLUDE_DIRS} )
+target_link_libraries( QtVTKProject ${OpenCV_LIBS} )
+
+
+find_package(DICOM QUIET)
+if(DICOM_FOUND)
+  include(${DICOM_USE_FILE})
+endif()
+set(VTK_DICOM_LIBRARIES vtkDICOM)
