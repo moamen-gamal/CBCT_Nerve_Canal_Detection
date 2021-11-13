@@ -18,10 +18,10 @@ class MainWindow : public QMainWindow
 private:
     Ui::MainWindow *ui;
 
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow_2;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow_3;
-    vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow_4;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> axialRenderWindow;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> coronalRenderWindow;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> sagittalRenderWindow;
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> volumeRenderWiindow;
 
     vtkSmartPointer<vtkRenderer> mRenderer;
     vtkSmartPointer<QVTKInteractor> mInteractor;
@@ -36,20 +36,19 @@ public:
     ~MainWindow();
 
 public slots:
-    void onDrawSphereClick();
-    void TweakTheDicom();
-    void TweakTheDicom2();
-    void TweakTheDicom3();
+    void axial_slider_control();
+    void coronal_slider_control();
+    void Sagittal_slider_control();
+    void intensity_control();
+    void median_Filter();
     void Gaussin_Filter();
-
     void SLICERER();
-    void TweakTheIntensity();
 private slots:
     void on_actionfile_triggered();
-    void onDrawSphere2Click();
-    void ChangeASLICERER();
-    void ChangeSKESLICERER();
-    void ChageABoneSLICERER();
+    void open_view_dicom();
+    void mip_volume_render();
+    void muscle_volume_render();
+    void Bone_volume_render();
 
 
 };

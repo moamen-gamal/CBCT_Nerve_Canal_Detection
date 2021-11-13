@@ -245,21 +245,6 @@
 
 
 
-#include "itkImage.h"
-#include "itkGDCMImageIO.h"
-#include "itkGDCMSeriesFileNames.h"
-#include "itkImageSeriesReader.h"
-#include "itkImageFileWriter.h"
-
-#include <opencv2\opencv.hpp>
-#include <stdio.h>
-#include <opencv2/core.hpp>
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
-
-#include <gdcmImage.h>
-
 
 
 #include <vtkAnnotatedCubeActor.h>
@@ -328,10 +313,10 @@
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
-	mRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-	mRenderWindow_2(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-	mRenderWindow_3(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-	mRenderWindow_4(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+    axialRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+    coronalRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+    sagittalRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+    volumeRenderWiindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
 
 	mRenderer(vtkSmartPointer<vtkRenderer>::New()),
 	mInteractor(vtkSmartPointer<QVTKInteractor>::New()),
@@ -341,38 +326,38 @@ MainWindow::MainWindow(QWidget *parent) :
 	
 {
 	ui->setupUi(this);
-	ui->horizontalSlider->setValue(0);
-	ui->horizontalSlider_5->setRange(-8192,0);
-	ui->horizontalSlider_5->setMaximum(0);
-	ui->horizontalSlider_5->setValue(-4096);
-	ui->openGLWidget->SetRenderWindow(mRenderWindow);
-	ui->openGLWidget_2->SetRenderWindow(mRenderWindow_2);
-	ui->openGLWidget_3->SetRenderWindow(mRenderWindow_3);
-	ui->openGLWidget_4->SetRenderWindow(mRenderWindow_4);
+    ui->axial_slider->setValue(0);
+    ui->intensity_slider->setRange(-8192,0);
+    ui->intensity_slider->setMaximum(0);
+    ui->intensity_slider->setValue(-4096);
+    ui->axial_view_widget->SetRenderWindow(axialRenderWindow);
+    ui->coronal_view_widget->SetRenderWindow(coronalRenderWindow);
+    ui->sagittal_view_widget->SetRenderWindow(sagittalRenderWindow);
+    ui->volume_view_widget->SetRenderWindow(volumeRenderWiindow);
 	mInteractor->Initialize();
 	// Set the background color 
 	mRenderer->SetBackground(0, 0, 0);
-  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(onDrawSphere2Click()));
-  connect(ui->actionbone, SIGNAL(triggered()), this, SLOT(ChageABoneSLICERER()));
-  connect(ui->actionMIP, SIGNAL(triggered()), this, SLOT(ChangeASLICERER()));
-  connect(ui->actionskeletal, SIGNAL(triggered()), this, SLOT(ChangeSKESLICERER()));
+  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(open_view_dicom()));
+  connect(ui->actionbone, SIGNAL(triggered()), this, SLOT(Bone_volume_render()));
+  connect(ui->actionMIP, SIGNAL(triggered()), this, SLOT(mip_volume_render()));
+  connect(ui->actionskeletal, SIGNAL(triggered()), this, SLOT(muscle_volume_render()));
   connect(ui->actiongaussin, SIGNAL(triggered()), this, SLOT(Gaussin_Filter()));
-  connect(ui->actionMedien, SIGNAL(triggered()), this, SLOT(onDrawSphereClick()));
+  connect(ui->actionMedien, SIGNAL(triggered()), this, SLOT(median_Filter()));
 
 
 
 
-	QObject::connect(ui->horizontalSlider, &QSlider::valueChanged,
-		this, &MainWindow::TweakTheDicom);
+    QObject::connect(ui->axial_slider, &QSlider::valueChanged,
+        this, &MainWindow::axial_slider_control);
 
-	QObject::connect(ui->horizontalSlider_2, &QSlider::valueChanged,
-		this, &MainWindow::TweakTheDicom2);
+    QObject::connect(ui->coronal_slider, &QSlider::valueChanged,
+        this, &MainWindow::coronal_slider_control);
 
-	QObject::connect(ui->horizontalSlider_3, &QSlider::valueChanged,
-		this, &MainWindow::TweakTheDicom3);
+    QObject::connect(ui->sagittal_slider, &QSlider::valueChanged,
+        this, &MainWindow::Sagittal_slider_control);
 
-	QObject::connect(ui->horizontalSlider_5, &QSlider::valueChanged,
-		this, &MainWindow::TweakTheIntensity);
+    QObject::connect(ui->intensity_slider, &QSlider::valueChanged,
+        this, &MainWindow::intensity_control);
 
 
 
@@ -391,13 +376,13 @@ std::vector<std::string> Full_Path_Names;
 int TheVolType=4;
 
 
-void MainWindow::onDrawSphereClick() {
+void MainWindow::median_Filter() {
 	
 	vtkNew<vtkNamedColors> colors;
 
 	
 	vtkNew<vtkDICOMImageReader> reader;
-	int y = ui->horizontalSlider->value();
+    int y = ui->axial_slider->value();
 
 	
 	const char *converter = (Full_Path_Names[y]).c_str();
@@ -445,18 +430,18 @@ void MainWindow::onDrawSphereClick() {
 		colors->GetColor3d("0").GetData());
 
 
-	mRenderWindow->SetSize(600, 300);
-	mRenderWindow->AddRenderer(originalRenderer);
-	mRenderWindow->AddRenderer(gradientMagnitudeRenderer);
-	mRenderWindow->SetInteractor(mInteractor);
+    axialRenderWindow->SetSize(600, 300);
+    axialRenderWindow->AddRenderer(originalRenderer);
+    axialRenderWindow->AddRenderer(gradientMagnitudeRenderer);
+    axialRenderWindow->SetInteractor(mInteractor);
 
-	mRenderWindow->Render();
+    axialRenderWindow->Render();
 
 }
 
 QString dir3;
 
-void MainWindow::onDrawSphere2Click()
+void MainWindow::open_view_dicom()
 {
 
 
@@ -481,10 +466,10 @@ void MainWindow::onDrawSphere2Click()
 	}
 
 	
-	ui->horizontalSlider->setRange(0, DICOM_Names.size());
-	ui->horizontalSlider_2->setRange(0, DICOM_Names.size());
-	ui->horizontalSlider_3->setRange(0, DICOM_Names.size());
-	ui->horizontalSlider_4->setRange(0, DICOM_Names.size());
+    ui->axial_slider->setRange(0, DICOM_Names.size());
+    ui->coronal_slider->setRange(0, DICOM_Names.size());
+    ui->sagittal_slider->setRange(0, DICOM_Names.size());
+    ui->volume_slider->setRange(0, DICOM_Names.size());
 
 	// Read all the DICOM files in the specified directory.
 	vtkNew<vtkDICOMImageReader> reader;
@@ -505,9 +490,9 @@ void MainWindow::onDrawSphere2Click()
 	imageViewer->SetupInteractor(mInteractor);
 	imageViewer2->SetupInteractor(mInteractor);
 	imageViewer3->SetupInteractor(mInteractor);
-	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
-	imageViewer2->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
-	imageViewer3->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
+    imageViewer->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
+    imageViewer2->SetRenderWindow(ui->coronal_view_widget->GetRenderWindow());
+    imageViewer3->SetRenderWindow(ui->sagittal_view_widget->GetRenderWindow());
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	imageViewer->Render();
 	imageViewer2->Render();
@@ -527,7 +512,7 @@ void MainWindow::onDrawSphere2Click()
 	renderWindowInteractor->Start();
 }
 
-void MainWindow::TweakTheDicom()
+void MainWindow::axial_slider_control()
 {
 	vtkNew<vtkDICOMImageReader> reader;
 	reader->SetDirectoryName(dir3.toUtf8().constData());
@@ -539,19 +524,19 @@ void MainWindow::TweakTheDicom()
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	imageViewer->SetupInteractor(mInteractor);
-	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+    imageViewer->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
 	imageViewer->Render();
 	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
 	imageViewer->SetColorWindow(range[1] - range[0]);
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-	imageViewer->SetSlice(ui->horizontalSlider->value());
+    imageViewer->SetSlice(ui->axial_slider->value());
 	imageViewer->GetRenderer()->ResetCamera();
 	imageViewer->Render();
 	renderWindowInteractor->Start();
 }
 
 
-void MainWindow::TweakTheDicom2()
+void MainWindow::coronal_slider_control()
 {
 	vtkNew<vtkDICOMImageReader> reader;
 	reader->SetDirectoryName(dir3.toUtf8().constData());
@@ -563,18 +548,18 @@ void MainWindow::TweakTheDicom2()
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	imageViewer->SetupInteractor(mInteractor);
-	imageViewer->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
+    imageViewer->SetRenderWindow(ui->coronal_view_widget->GetRenderWindow());
 	imageViewer->Render();
 	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
 	imageViewer->SetColorWindow(range[1] - range[0]);;
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-	imageViewer->SetSlice(ui->horizontalSlider_2->value());
+    imageViewer->SetSlice(ui->coronal_slider->value());
 	imageViewer->GetRenderer()->ResetCamera();
 	imageViewer->Render();
 	renderWindowInteractor->Start();
 }
 
-void MainWindow::TweakTheDicom3()
+void MainWindow::Sagittal_slider_control()
 {
 	vtkNew<vtkDICOMImageReader> reader;
 	reader->SetDirectoryName(dir3.toUtf8().constData());
@@ -586,12 +571,12 @@ void MainWindow::TweakTheDicom3()
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	imageViewer->SetupInteractor(mInteractor);
-	imageViewer->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
+    imageViewer->SetRenderWindow(ui->sagittal_view_widget->GetRenderWindow());
 	imageViewer->Render();
 	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
 	imageViewer->SetColorWindow(range[1] - range[0]);
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-	imageViewer->SetSlice(ui->horizontalSlider_3->value());
+    imageViewer->SetSlice(ui->sagittal_slider->value());
 	imageViewer->GetRenderer()->ResetCamera();
 	imageViewer->Render();
 	renderWindowInteractor->Start();
@@ -604,7 +589,7 @@ void MainWindow::Gaussin_Filter()
 	image->SetExtent(0, 9, 0, 9, 0, 0);
 	image->AllocateScalars(VTK_INT, 1);
 	int* pixel = static_cast<int*>(image->GetScalarPointer(0, 9, 0));
-	int y = ui->horizontalSlider->value();
+    int y = ui->axial_slider->value();
 	const char *converter = (Full_Path_Names[y]).c_str();
 	reader->SetFileName(converter);
 	reader->Update();
@@ -650,13 +635,13 @@ void MainWindow::Gaussin_Filter()
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	vtkNew<vtkInteractorStyleImage> style;
 	renderWindowInteractor->SetInteractorStyle(style);
-	renderWindowInteractor->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+    renderWindowInteractor->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
 	renderWindowInteractor->Initialize();
-	mRenderWindow->SetSize(600, 300);
-	mRenderWindow->AddRenderer(originalRenderer);
-	mRenderWindow->AddRenderer(filteredRenderer);
-	mRenderWindow->SetInteractor(mInteractor);
-	mRenderWindow->Render();
+    axialRenderWindow->SetSize(600, 300);
+    axialRenderWindow->AddRenderer(originalRenderer);
+    axialRenderWindow->AddRenderer(filteredRenderer);
+    axialRenderWindow->SetInteractor(mInteractor);
+    axialRenderWindow->Render();
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	mRenderer->ResetCamera();
 	renderWindowInteractor->Start();
@@ -957,17 +942,17 @@ void MainWindow::SLICERER()
 
 		renderWindowInteractor->SetInteractorStyle(style);
 
-		renderWindowInteractor->SetRenderWindow(ui->openGLWidget_4->GetRenderWindow());
+        renderWindowInteractor->SetRenderWindow(ui->volume_view_widget->GetRenderWindow());
 
 		renderWindowInteractor->Initialize();
 
 		mRenderer->SetBackground(
 			colors->GetColor3d("LightSlateGray").GetData());
-		mRenderWindow_4->SetSize(600, 300);
-		mRenderWindow_4->AddRenderer(renderer2);
-		mRenderWindow_4->SetInteractor(mInteractor);
+        volumeRenderWiindow->SetSize(600, 300);
+        volumeRenderWiindow->AddRenderer(renderer2);
+        volumeRenderWiindow->SetInteractor(mInteractor);
 
-		mRenderWindow_4->Render();
+        volumeRenderWiindow->Render();
 
 		renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 		mRenderer->ResetCamera();
@@ -976,7 +961,7 @@ void MainWindow::SLICERER()
 		renderWindowInteractor->Start();
 
 
-		ui->openGLWidget_4->SetRenderWindow(renWin);
+        ui->volume_view_widget->SetRenderWindow(renWin);
 
 }
 void MainWindow::on_actionfile_triggered()
@@ -988,7 +973,7 @@ void MainWindow::on_actionfile_triggered()
 
 }
 
-void MainWindow::ChangeASLICERER() 
+void MainWindow::mip_volume_render()
 {
 
 	TheVolType = 0;
@@ -997,7 +982,7 @@ void MainWindow::ChangeASLICERER()
 
 
 }
-void MainWindow::ChangeSKESLICERER()
+void MainWindow::muscle_volume_render()
 {
 
 	TheVolType = 5;
@@ -1007,7 +992,7 @@ void MainWindow::ChangeSKESLICERER()
 
 }
 
-void MainWindow::ChageABoneSLICERER() 
+void MainWindow::Bone_volume_render()
 {
 	TheVolType = 3;
 	zerrrrro = 1;
@@ -1016,10 +1001,10 @@ void MainWindow::ChageABoneSLICERER()
 
 }
 
-void MainWindow::TweakTheIntensity()
+void MainWindow::intensity_control()
 {
 	
-	TheLightIntensity = (ui->horizontalSlider_5->value())*-1;
+    TheLightIntensity = (ui->intensity_slider->value())*-1;
 	SLICERER();
 
 }
