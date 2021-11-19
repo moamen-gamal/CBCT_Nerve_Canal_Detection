@@ -36,6 +36,7 @@
 
 
 
+
 #include <vtkActor.h>
 #include <vtkNamedColors.h>
 #include <vtkNew.h>
@@ -50,6 +51,10 @@
 
 #include <vtkInteractorStyleTrackballActor.h>
 
+
+#include "itkImageSeriesReader.h"
+#include "itkGDCMImageIO.h"
+#include "itkGDCMSeriesFileNames.h"
 
 
 #include "vtkCommand.h"
@@ -70,6 +75,7 @@
 #include "vtkStreamingDemandDrivenPipeline.h"
 
 
+#include <vtkImageDilateErode3D.h>
 
 #include <vtkSmartPointer.h>
 #include <vtkImageData.h>
@@ -84,6 +90,8 @@
 #include <vtkColorTransferFunction.h>
 
 #include <vtkStringArray.h>
+#include <vtkImageOpenClose3D.h>
+
 
 
 
@@ -192,7 +200,9 @@
 #include <exception>
 #include <vtkDataSetMapper.h>
 
-
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "QuickView.h"
 #include <vtkCamera.h>
 #include <vtkColorTransferFunction.h>
 #include <vtkContourValues.h>
@@ -212,6 +222,7 @@
 
 
 #include <vtkActor.h>
+
 #include <vtkCamera.h>
 #include <vtkImageActor.h>
 #include <vtkImageData.h>
@@ -240,12 +251,58 @@
 #include <vtkMedicalImageProperties.h>
 
 
+#include <complex>
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+// Software Guide : EndCodeSnippet
+
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkGDCMImageIO.h"
+#include <list>
+#include <fstream>
+
+
+#include <vtkDICOMImageReader.h>
+#include <vtkImageViewer2.h>
+#include <vtkNamedColors.h>
+#include <vtkNew.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkRenderer.h>
+#include <vtkSmartPointer.h>
 
 
 
 
+#include "itkImage.h"
+#include "itkGDCMImageIO.h"
+#include "itkGDCMSeriesFileNames.h"
+#include "itkImageSeriesReader.h"
+#include "itkImageFileWriter.h"
+
+#include <opencv2\opencv.hpp>
+#include <stdio.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+
+#include "opencv2/imgproc.hpp"
+#include "opencv2/imgcodecs.hpp"
+#include "opencv2/highgui.hpp"
+#include <gdcmImage.h>
+
+#include "itkGDCMImageIO.h"
+#include "itkGDCMSeriesFileNames.h"
+#include "itkImageSeriesReader.h"
+#include "itkImageSeriesWriter.h"
 
 
+#include <vector>
+#include "itksys/SystemTools.hxx"
 
 #include <vtkAnnotatedCubeActor.h>
 #include <vtkAxesActor.h>
@@ -289,8 +346,36 @@
 #include <vtkTextMapper.h>
 #include <vtkTextProperty.h>
 
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkImageFileWriter.h"
+#include "itkRescaleIntensityImageFilter.h"
+#include "itkCastImageFilter.h"
+#include<itkGDCMImageIO.h>
+#include <opencv2\opencv.hpp>
+#include <stdio.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
+#include "opencv2/opencv.hpp"
+
+#include <iostream>
+#include <opencv2/core/core.hpp>
+
+// Library to include for drawing shapes
+#include <opencv2/highgui/highgui.hpp>
+#include <opencv2/imgproc.hpp>
+
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkOpenCVImageBridge.h"
+#include <opencv2/opencv.hpp>
+#include <iostream>
 
 
+
+#include <vtkProp3D.h>
 // vtkFlyingEdges3D was introduced in VTK >= 8.2
 #if VTK_MAJOR_VERSION >= 9 || (VTK_MAJOR_VERSION >= 8 && VTK_MINOR_VERSION >= 2)
 #define USE_FLYING_EDGES
@@ -305,18 +390,58 @@
 #endif
 
 
+#include "itkImageFileReader.h"
+#include "itkImageToVTKImageFilter.h"
+
+#include "itkImage.h"
+#include "itkGDCMImageIO.h"
+#include "itkGDCMSeriesFileNames.h"
+#include "itkImageSeriesReader.h"
+#include "itkImageFileWriter.h"
 
 
+#include "itkBinaryThresholdImageFilter.h"
+
+
+#include "itkImage.h"
+#include "itkImageFileReader.h"
+#include "itkOpenCVImageBridge.h"
+
+// includes from OpenCV
+#include "opencv2/opencv.hpp" // cv::imwrite
+
+
+#include <itkImageToVTKImageFilter.h>
+#include <vtkSmartPointer.h>
+#include <vtkImageData.h>
+#include <vtkImageThreshold.h>
+#include <vtkRenderWindow.h>
+#include <vtkRenderWindowInteractor.h>
+#include <vtkInteractorStyleImage.h>
+#include <vtkRenderer.h>
+#include <vtkImageMapper3D.h>
+#include <vtkImageActor.h>
+#include <vtkImageCast.h>
+#include <vtkNIFTIImageWriter.h>
+#include <vtkImageMandelbrotSource.h>
+#include <vtkImageViewer2.h>
+#include <vtkDICOMImageReader.h>
+
+
+#include "gdcmImageReader.h"
+#include "gdcmImageWriter.h"
+#include "gdcmImage.h"
+#include "gdcmPhotometricInterpretation.h"
 
 
 
 MainWindow::MainWindow(QWidget *parent) :
 	QMainWindow(parent),
 	ui(new Ui::MainWindow),
-    axialRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-    coronalRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-    sagittalRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
-    volumeRenderWiindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+	mRenderWindow(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+	mRenderWindow_2(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+	mRenderWindow_3(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
+	mRenderWindow_4(vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New()),
 
 	mRenderer(vtkSmartPointer<vtkRenderer>::New()),
 	mInteractor(vtkSmartPointer<QVTKInteractor>::New()),
@@ -326,38 +451,38 @@ MainWindow::MainWindow(QWidget *parent) :
 	
 {
 	ui->setupUi(this);
-    ui->axial_slider->setValue(0);
-    ui->intensity_slider->setRange(-8192,0);
-    ui->intensity_slider->setMaximum(0);
-    ui->intensity_slider->setValue(-4096);
-    ui->axial_view_widget->SetRenderWindow(axialRenderWindow);
-    ui->coronal_view_widget->SetRenderWindow(coronalRenderWindow);
-    ui->sagittal_view_widget->SetRenderWindow(sagittalRenderWindow);
-    ui->volume_view_widget->SetRenderWindow(volumeRenderWiindow);
+	ui->horizontalSlider->setValue(0);
+	ui->horizontalSlider_5->setRange(-8192,0);
+	ui->horizontalSlider_5->setMaximum(0);
+	ui->horizontalSlider_5->setValue(-4096);
+	ui->openGLWidget->SetRenderWindow(mRenderWindow);
+	ui->openGLWidget_2->SetRenderWindow(mRenderWindow_2);
+	ui->openGLWidget_3->SetRenderWindow(mRenderWindow_3);
+	ui->openGLWidget_4->SetRenderWindow(mRenderWindow_4);
 	mInteractor->Initialize();
 	// Set the background color 
 	mRenderer->SetBackground(0, 0, 0);
-  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(open_view_dicom()));
-  connect(ui->actionbone, SIGNAL(triggered()), this, SLOT(Bone_volume_render()));
-  connect(ui->actionMIP, SIGNAL(triggered()), this, SLOT(mip_volume_render()));
-  connect(ui->actionskeletal, SIGNAL(triggered()), this, SLOT(muscle_volume_render()));
+  connect(ui->actionopen, SIGNAL(triggered()), this, SLOT(DeleteThisFun()));
+  connect(ui->actionbone, SIGNAL(triggered()), this, SLOT(ChageABoneSLICERER()));
+  connect(ui->actionMIP, SIGNAL(triggered()), this, SLOT(ChangeASLICERER()));
+  connect(ui->actionskeletal, SIGNAL(triggered()), this, SLOT(ChangeSKESLICERER()));
   connect(ui->actiongaussin, SIGNAL(triggered()), this, SLOT(Gaussin_Filter()));
-  connect(ui->actionMedien, SIGNAL(triggered()), this, SLOT(median_Filter()));
+  connect(ui->actionMedien, SIGNAL(triggered()), this, SLOT(onDrawSphereClick()));
 
 
 
 
-    QObject::connect(ui->axial_slider, &QSlider::valueChanged,
-        this, &MainWindow::axial_slider_control);
+	QObject::connect(ui->horizontalSlider, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheDicom);
 
-    QObject::connect(ui->coronal_slider, &QSlider::valueChanged,
-        this, &MainWindow::coronal_slider_control);
+	QObject::connect(ui->horizontalSlider_2, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheDicom2);
 
-    QObject::connect(ui->sagittal_slider, &QSlider::valueChanged,
-        this, &MainWindow::Sagittal_slider_control);
+	QObject::connect(ui->horizontalSlider_3, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheDicom3);
 
-    QObject::connect(ui->intensity_slider, &QSlider::valueChanged,
-        this, &MainWindow::intensity_control);
+	QObject::connect(ui->horizontalSlider_5, &QSlider::valueChanged,
+		this, &MainWindow::TweakTheIntensity);
 
 
 
@@ -376,13 +501,13 @@ std::vector<std::string> Full_Path_Names;
 int TheVolType=4;
 
 
-void MainWindow::median_Filter() {
+void MainWindow::onDrawSphereClick() {
 	
 	vtkNew<vtkNamedColors> colors;
 
 	
 	vtkNew<vtkDICOMImageReader> reader;
-    int y = ui->axial_slider->value();
+	int y = ui->horizontalSlider->value();
 
 	
 	const char *converter = (Full_Path_Names[y]).c_str();
@@ -413,7 +538,7 @@ void MainWindow::median_Filter() {
 	Filtered->GetProperty()->SetColorWindow(range[1] - range[0]);
 	OriginalActor->GetProperty()->SetColorLevel(0.5 * (range[0] + range[1]));
 	OriginalActor->GetProperty()->SetColorWindow(range[1] - range[0]);
-
+	
 
 	vtkNew<vtkRenderer> originalRenderer;
 	originalRenderer->SetViewport(leftViewport);
@@ -430,18 +555,19 @@ void MainWindow::median_Filter() {
 		colors->GetColor3d("0").GetData());
 
 
-    axialRenderWindow->SetSize(600, 300);
-    axialRenderWindow->AddRenderer(originalRenderer);
-    axialRenderWindow->AddRenderer(gradientMagnitudeRenderer);
-    axialRenderWindow->SetInteractor(mInteractor);
+	mRenderWindow->SetSize(600, 300);
+	mRenderWindow->AddRenderer(originalRenderer);
+	mRenderWindow->AddRenderer(gradientMagnitudeRenderer);
+	mRenderWindow->SetInteractor(mInteractor);
 
-    axialRenderWindow->Render();
+	mRenderWindow->Render();
 
 }
 
 QString dir3;
+QString dir45;
 
-void MainWindow::open_view_dicom()
+void MainWindow::onDrawSphere2Click()
 {
 
 
@@ -466,10 +592,10 @@ void MainWindow::open_view_dicom()
 	}
 
 	
-    ui->axial_slider->setRange(0, DICOM_Names.size());
-    ui->coronal_slider->setRange(0, DICOM_Names.size());
-    ui->sagittal_slider->setRange(0, DICOM_Names.size());
-    ui->volume_slider->setRange(0, DICOM_Names.size());
+	ui->horizontalSlider->setRange(0, DICOM_Names.size());
+	ui->horizontalSlider_2->setRange(0, DICOM_Names.size());
+	ui->horizontalSlider_3->setRange(0, DICOM_Names.size());
+	ui->horizontalSlider_4->setRange(0, DICOM_Names.size());
 
 	// Read all the DICOM files in the specified directory.
 	vtkNew<vtkDICOMImageReader> reader;
@@ -480,9 +606,9 @@ void MainWindow::open_view_dicom()
 	vtkNew<vtkImageViewer2> imageViewer;
 	vtkNew<vtkImageViewer2> imageViewer2;
 	vtkNew<vtkImageViewer2> imageViewer3;
-	imageViewer->SetSliceOrientationToXZ();
+	imageViewer3->SetSliceOrientationToXZ();
 	imageViewer2->SetSliceOrientationToYZ();
-	imageViewer3->SetSliceOrientationToXY();
+	imageViewer->SetSliceOrientationToXY();
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	imageViewer2->SetInputConnection(reader->GetOutputPort());
 	imageViewer3->SetInputConnection(reader->GetOutputPort());
@@ -490,9 +616,9 @@ void MainWindow::open_view_dicom()
 	imageViewer->SetupInteractor(mInteractor);
 	imageViewer2->SetupInteractor(mInteractor);
 	imageViewer3->SetupInteractor(mInteractor);
-    imageViewer->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
-    imageViewer2->SetRenderWindow(ui->coronal_view_widget->GetRenderWindow());
-    imageViewer3->SetRenderWindow(ui->sagittal_view_widget->GetRenderWindow());
+	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	imageViewer2->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
+	imageViewer3->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	imageViewer->Render();
 	imageViewer2->Render();
@@ -512,7 +638,74 @@ void MainWindow::open_view_dicom()
 	renderWindowInteractor->Start();
 }
 
-void MainWindow::axial_slider_control()
+void MainWindow::TweakTheDicom()
+{
+	vtkNew<vtkDICOMImageReader> reader;
+	reader->SetDirectoryName(dir3.toUtf8().constData());
+	reader->Update();
+	auto image = reader->GetOutput();
+	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
+
+
+	vtkNew<vtkImageDilateErode3D> dilateErode;
+	dilateErode->SetInputConnection(reader->GetOutputPort());
+	dilateErode->SetDilateValue(300000);
+	dilateErode->SetErodeValue(255);
+	dilateErode->SetKernelSize(1, 1, 1);
+	dilateErode->ReleaseDataFlagOff();
+
+	
+
+
+	vtkNew<vtkImageViewer2> imageViewer;
+	imageViewer->SetSliceOrientationToXY();
+	imageViewer->SetInputConnection(reader->GetOutputPort());
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	imageViewer->Render();
+
+	
+
+	
+	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+	imageViewer->SetSlice(ui->horizontalSlider->value());
+	imageViewer->GetRenderer()->ResetCamera();
+	imageViewer->Render();
+	renderWindowInteractor->Start();
+}
+
+
+void MainWindow::TweakTheDicom2()
+{
+	vtkNew<vtkDICOMImageReader> reader;
+	reader->SetDirectoryName(dir3.toUtf8().constData());
+	reader->Update();
+	auto image = reader->GetOutput();
+	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
+	vtkNew<vtkImageViewer2> imageViewer;
+	imageViewer->SetSliceOrientationToYZ();
+	//vtkSmartPointer<vtkProp3D> TheProp;
+	//TheProp->SetUserMatrix(imageViewer->GetImageActor()->GetMatrix());
+
+
+	imageViewer->SetInputConnection(reader->GetOutputPort());
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget_2->GetRenderWindow());
+	imageViewer->Render();
+	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);;
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+	imageViewer->SetSlice(ui->horizontalSlider_2->value());
+	imageViewer->GetRenderer()->ResetCamera();
+	imageViewer->Render();
+	renderWindowInteractor->Start();
+}
+
+void MainWindow::TweakTheDicom3()
 {
 	vtkNew<vtkDICOMImageReader> reader;
 	reader->SetDirectoryName(dir3.toUtf8().constData());
@@ -524,59 +717,12 @@ void MainWindow::axial_slider_control()
 	imageViewer->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	imageViewer->SetupInteractor(mInteractor);
-    imageViewer->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
+	imageViewer->SetRenderWindow(ui->openGLWidget_3->GetRenderWindow());
 	imageViewer->Render();
 	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
 	imageViewer->SetColorWindow(range[1] - range[0]);
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-    imageViewer->SetSlice(ui->axial_slider->value());
-	imageViewer->GetRenderer()->ResetCamera();
-	imageViewer->Render();
-	renderWindowInteractor->Start();
-}
-
-
-void MainWindow::coronal_slider_control()
-{
-	vtkNew<vtkDICOMImageReader> reader;
-	reader->SetDirectoryName(dir3.toUtf8().constData());
-	reader->Update();
-	auto image = reader->GetOutput();
-	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
-	vtkNew<vtkImageViewer2> imageViewer;
-	imageViewer->SetSliceOrientationToYZ();
-	imageViewer->SetInputConnection(reader->GetOutputPort());
-	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-	imageViewer->SetupInteractor(mInteractor);
-    imageViewer->SetRenderWindow(ui->coronal_view_widget->GetRenderWindow());
-	imageViewer->Render();
-	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
-	imageViewer->SetColorWindow(range[1] - range[0]);;
-	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-    imageViewer->SetSlice(ui->coronal_slider->value());
-	imageViewer->GetRenderer()->ResetCamera();
-	imageViewer->Render();
-	renderWindowInteractor->Start();
-}
-
-void MainWindow::Sagittal_slider_control()
-{
-	vtkNew<vtkDICOMImageReader> reader;
-	reader->SetDirectoryName(dir3.toUtf8().constData());
-	reader->Update();
-	auto image = reader->GetOutput();
-	double *range = image->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
-	vtkNew<vtkImageViewer2> imageViewer;
-	imageViewer->SetSliceOrientationToXY();
-	imageViewer->SetInputConnection(reader->GetOutputPort());
-	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
-	imageViewer->SetupInteractor(mInteractor);
-    imageViewer->SetRenderWindow(ui->sagittal_view_widget->GetRenderWindow());
-	imageViewer->Render();
-	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
-	imageViewer->SetColorWindow(range[1] - range[0]);
-	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
-    imageViewer->SetSlice(ui->sagittal_slider->value());
+	imageViewer->SetSlice(ui->horizontalSlider_3->value());
 	imageViewer->GetRenderer()->ResetCamera();
 	imageViewer->Render();
 	renderWindowInteractor->Start();
@@ -589,13 +735,51 @@ void MainWindow::Gaussin_Filter()
 	image->SetExtent(0, 9, 0, 9, 0, 0);
 	image->AllocateScalars(VTK_INT, 1);
 	int* pixel = static_cast<int*>(image->GetScalarPointer(0, 9, 0));
-    int y = ui->axial_slider->value();
+	int y = ui->horizontalSlider->value();
 	const char *converter = (Full_Path_Names[y]).c_str();
 	reader->SetFileName(converter);
 	reader->Update();
 	vtkNew<vtkImageCast> cast;
 	cast->SetInputConnection(reader->GetOutputPort());
 	cast->SetOutputScalarTypeToFloat();
+
+	// threshold the images
+	vtkSmartPointer<vtkImageThreshold> imageThreshold =
+		vtkSmartPointer<vtkImageThreshold>::New();
+	imageThreshold->SetInputConnection(reader->GetOutputPort());
+	// unsigned char lower = 127;
+	unsigned int upper = 3497;
+
+	imageThreshold->ThresholdByLower(upper);
+	imageThreshold->ReplaceInOn();
+	imageThreshold->SetInValue(0);
+	imageThreshold->ReplaceOutOn();
+	imageThreshold->SetOutValue(151);
+	imageThreshold->Update();
+
+	vtkNew<vtkImageDilateErode3D> dilate1;
+	dilate1->SetInputConnection(imageThreshold->GetOutputPort());
+	dilate1->SetDilateValue(0);
+	dilate1->SetErodeValue(255);
+	dilate1->SetKernelSize(31, 31, 1);
+
+	vtkNew<vtkImageDilateErode3D> erode1;
+	erode1->SetInputConnection(dilate1->GetOutputPort());
+	erode1->SetDilateValue(255);
+	erode1->SetErodeValue(0);
+	erode1->SetKernelSize(31, 31, 1);
+
+	vtkNew<vtkImageOpenClose3D> openClose;
+	openClose->SetInputConnection(imageThreshold->GetOutputPort());
+	openClose->SetOpenValue(0);
+	openClose->SetCloseValue(255);
+	//openClose->SetKernelSize(5, 5, 3);
+	openClose->ReleaseDataFlagOff();
+	openClose->GetOutput();
+	openClose->GetCloseValue();
+	openClose->GetOpenValue();
+
+
 	vtkNew<vtkImageGaussianSmooth> filter;
 	filter->SetDimensionality(2);
 	filter->SetInputConnection(cast->GetOutputPort());
@@ -606,7 +790,7 @@ void MainWindow::Gaussin_Filter()
 	originalActor->GetMapper()->SetBackground(2);
 	originalActor->GetMapper()->SetInputConnection(reader->GetOutputPort());
 	vtkNew<vtkImageActor> filteredActor;
-	filteredActor->GetMapper()->SetInputConnection(filter->GetOutputPort());
+	filteredActor->GetMapper()->SetInputConnection(erode1->GetOutputPort());
 	double originalViewport[4] = { 0.0, 0.0, 0.5, 1.0 };
 	double filteredViewport[4] = { 0.5, 0.0, 1.0, 1.0 };
 	vtkNew<vtkImageResliceMapper> imageResliceMapper;
@@ -615,8 +799,8 @@ void MainWindow::Gaussin_Filter()
 	imageSlice->SetMapper(imageResliceMapper);
 	auto image2 = reader->GetOutput();
 	double *range = image2->GetPointData()->GetScalars()->GetRange();//0-500---0---250---250
-	filteredActor->GetProperty()->SetColorLevel(0.5 * (range[0] + range[1]));
-	filteredActor->GetProperty()->SetColorWindow(range[1] - range[0]);
+	//filteredActor->GetProperty()->SetColorLevel(0.5 * (range[0] + range[1]));
+	//filteredActor->GetProperty()->SetColorWindow(range[1] - range[0]);
 	originalActor->GetProperty()->SetColorLevel(0.5 * (range[0] + range[1]));
 	originalActor->GetProperty()->SetColorWindow(range[1] - range[0]);
 	vtkNew<vtkRenderer> originalRenderer;
@@ -635,13 +819,13 @@ void MainWindow::Gaussin_Filter()
 	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
 	vtkNew<vtkInteractorStyleImage> style;
 	renderWindowInteractor->SetInteractorStyle(style);
-    renderWindowInteractor->SetRenderWindow(ui->axial_view_widget->GetRenderWindow());
+	renderWindowInteractor->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
 	renderWindowInteractor->Initialize();
-    axialRenderWindow->SetSize(600, 300);
-    axialRenderWindow->AddRenderer(originalRenderer);
-    axialRenderWindow->AddRenderer(filteredRenderer);
-    axialRenderWindow->SetInteractor(mInteractor);
-    axialRenderWindow->Render();
+	mRenderWindow->SetSize(600, 300);
+	mRenderWindow->AddRenderer(originalRenderer);
+	mRenderWindow->AddRenderer(filteredRenderer);
+	mRenderWindow->SetInteractor(mInteractor);
+	mRenderWindow->Render();
 	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 	mRenderer->ResetCamera();
 	renderWindowInteractor->Start();
@@ -942,17 +1126,17 @@ void MainWindow::SLICERER()
 
 		renderWindowInteractor->SetInteractorStyle(style);
 
-        renderWindowInteractor->SetRenderWindow(ui->volume_view_widget->GetRenderWindow());
+		renderWindowInteractor->SetRenderWindow(ui->openGLWidget_4->GetRenderWindow());
 
 		renderWindowInteractor->Initialize();
 
 		mRenderer->SetBackground(
 			colors->GetColor3d("LightSlateGray").GetData());
-        volumeRenderWiindow->SetSize(600, 300);
-        volumeRenderWiindow->AddRenderer(renderer2);
-        volumeRenderWiindow->SetInteractor(mInteractor);
+		mRenderWindow_4->SetSize(600, 300);
+		mRenderWindow_4->AddRenderer(renderer2);
+		mRenderWindow_4->SetInteractor(mInteractor);
 
-        volumeRenderWiindow->Render();
+		mRenderWindow_4->Render();
 
 		renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
 		mRenderer->ResetCamera();
@@ -961,7 +1145,7 @@ void MainWindow::SLICERER()
 		renderWindowInteractor->Start();
 
 
-        ui->volume_view_widget->SetRenderWindow(renWin);
+		ui->openGLWidget_4->SetRenderWindow(renWin);
 
 }
 void MainWindow::on_actionfile_triggered()
@@ -973,7 +1157,7 @@ void MainWindow::on_actionfile_triggered()
 
 }
 
-void MainWindow::mip_volume_render()
+void MainWindow::ChangeASLICERER() 
 {
 
 	TheVolType = 0;
@@ -982,7 +1166,7 @@ void MainWindow::mip_volume_render()
 
 
 }
-void MainWindow::muscle_volume_render()
+void MainWindow::ChangeSKESLICERER()
 {
 
 	TheVolType = 5;
@@ -992,7 +1176,7 @@ void MainWindow::muscle_volume_render()
 
 }
 
-void MainWindow::Bone_volume_render()
+void MainWindow::ChageABoneSLICERER() 
 {
 	TheVolType = 3;
 	zerrrrro = 1;
@@ -1001,10 +1185,435 @@ void MainWindow::Bone_volume_render()
 
 }
 
-void MainWindow::intensity_control()
+void MainWindow::TweakTheIntensity()
 {
 	
-    TheLightIntensity = (ui->intensity_slider->value())*-1;
+	TheLightIntensity = (ui->horizontalSlider_5->value())*-1;
 	SLICERER();
 
 }
+
+
+
+
+std::vector<std::string>XYZEER;
+double the_counter_Most_dialated=0;
+std::vector<double>The_intensities;
+double needed_Slice;
+void MainWindow::DeleteThisFun()
+{
+
+
+	vtkNew<vtkNamedColors> colors;
+
+	dir45 = QFileDialog::getExistingDirectory(this,
+		tr("Open Directory"),
+		"G:\MedicalData",
+		QFileDialog::ShowDirsOnly | QFileDialog::DontResolveSymlinks);
+
+	QDir  TheDirectory = dir45;
+	QStringList DICOMS = TheDirectory.entryList(QStringList() << "*.dcm", QDir::Files);
+
+
+
+	foreach(QString Dicom, DICOMS)
+	{
+		DICOM_Names.push_back(Dicom.toUtf8().constData());
+		std::string the_path = dir45.toStdString() + "\\" + Dicom.toUtf8().constData();
+		for (int i = 0 ; i <=the_path.size() ; i++)
+		{
+			
+			QString zee = the_path[i];
+			QMessageBox r;
+			r.setText( zee);
+			//r.exec();
+
+		}
+
+
+		Full_Path_Names.push_back(the_path);
+
+	}
+
+	std::string ZORO = "G:\\MedicalDATA\\DICOM\\128602 - L  yz\\NEW21888.dcm";
+	
+
+	
+	constexpr unsigned int Dimension = 2;
+	std::string location = "C:\\Users\\EGYPT_LAPTOP\\Desktop\\Dicomtoimage\\build\\Release\\NewDCM12345.jpeg";
+	for (int i = 0; i < Full_Path_Names.size();i++) {
+		const char* inputImage = Full_Path_Names[i].c_str();
+		const char* outputImage = location.c_str();
+
+		using InputPixelType = float;
+		using OutputPixelType = unsigned char;
+		using InputImageType = itk::Image<InputPixelType, Dimension>;
+		using OutputImageType = itk::Image<OutputPixelType, Dimension>;
+
+		using ReaderType = itk::ImageFileReader<InputImageType>;
+		ReaderType::Pointer reader = ReaderType::New();
+		reader->SetFileName(inputImage);
+
+		using RescaleType = itk::RescaleIntensityImageFilter<InputImageType, InputImageType>;
+		RescaleType::Pointer rescale = RescaleType::New();
+		rescale->SetInput(reader->GetOutput());
+		rescale->SetOutputMinimum(0);
+		rescale->SetOutputMaximum(itk::NumericTraits<OutputPixelType>::max());
+		//itk::NumericTraits<OutputPixelType>::max()
+		using FilterType = itk::CastImageFilter<InputImageType, OutputImageType>;
+		FilterType::Pointer filter = FilterType::New();
+		filter->SetInput(rescale->GetOutput());
+
+
+		using WriterType = itk::ImageFileWriter<OutputImageType>;
+		WriterType::Pointer writer = WriterType::New();
+		writer->SetFileName(outputImage);
+		writer->SetInput(filter->GetOutput());
+
+		try
+		{
+			writer->Update();
+		}
+		catch (itk::ExceptionObject& e)
+		{
+			std::cerr << "Error: " << e << std::endl;
+
+		}
+
+
+
+		cv::Mat image = cv::imread(outputImage);
+
+		// Check for failure
+		if (image.empty())
+		{
+			std::cout << "Could not open or find the image" << std::endl;
+			std::cin.get(); //wait for any key press
+
+		}
+
+		std::string windowName = "The Guitar"; //Name of the window
+
+		//cv::namedWindow(windowName); // Create a window
+
+		//imshow(windowName, image); // Show our image inside the created window.
+
+		//cv::waitKey(0); // Wait for any keystroke in the window
+
+		//cv::destroyWindow(windowName); //destroy the created window
+
+
+		cv::Mat src = cv::imread(outputImage, cv::IMREAD_GRAYSCALE);
+
+		cv::Mat dst;
+
+		// Set threshold and maxValue
+		double thresh = 200;
+		double maxValue = 255;
+		//cv::namedWindow("Oh MY", cv::CV_WINDOW_AUTOSIZE);
+		// Binary Threshold
+		cv::threshold(src, dst, thresh, maxValue, cv::THRESH_BINARY);
+		//imshow("oh my", dst);
+		int morph_size = 2;
+		cv::Mat element = cv::getStructuringElement(
+			cv::MORPH_RECT, cv::Size(2 * morph_size + 1,
+				2 * morph_size + 1),
+			cv::Point(morph_size, morph_size));
+		cv::Mat  dill;
+		dilate(dst, dill, element,
+			cv::Point(-1, -1), 1);
+		//imshow("dilate", dill);
+		//cv::waitKey();
+		//cv::Mat img = itk::OpenCVImageBridge::ITKImageToCVMat<OutputImageType>(outputImage);
+		//cv::imshow("One", img);
+
+
+		for (int i = 0; i < dill.rows; i++)
+		{
+			for (int j = 0; j < dill.cols; j++)
+			{
+				if ((int)dill.at<cv::Vec3b>(i, j)[0] > 40) {
+					the_counter_Most_dialated++;
+					std::string DATA = " X:  " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[0]) + " Y: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[1]) + " Z: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[2]);
+					XYZEER.push_back(DATA);
+				}
+				if (dill.type() == CV_8UC1)
+				{
+					dill.at<uchar>(i, j) = 255;
+
+
+
+				}
+				else if (dill.type() == CV_8UC3)
+				{
+					std::cout << (int)dill.at<cv::Vec3b>(i, j)[0] << " " << (int)dill.at<cv::Vec3b>(i, j)[1] << " " << (int)dill.at<cv::Vec3b>(i, j)[2] << std::endl;
+					dill.at<cv::Vec3b>(i, j)[0] = 255;
+					dill.at<cv::Vec3b>(i, j)[1] = 255;
+					dill.at<cv::Vec3b>(i, j)[2] = 255;
+
+					cout << (int)dill.at<cv::Vec3b>(i, j)[0] << " " << (int)dill.at<cv::Vec3b>(i, j)[1] << " " << (int)dill.at<cv::Vec3b>(i, j)[2] << endl;
+				}
+
+				else
+				{
+					cout << "Anknown image format" << endl;
+
+				}
+			}
+		}
+		The_intensities.push_back(the_counter_Most_dialated);
+		//QString str;
+		//for (int i = 0; i < XYZEER.size(); ++i)
+		//{
+			//if (i > 0)
+				//str += " ";
+			//str += QString::fromStdString(XYZEER[i]);
+		//}
+		the_counter_Most_dialated = 0;
+
+
+
+	}
+	double max = *std::max_element(The_intensities.begin(), The_intensities.end());
+	for (int i = 0; i < The_intensities.size();i++)
+	{
+	
+		if (The_intensities[i] == max) 
+		{
+			needed_Slice = i;
+		
+		}
+	}
+
+	QMessageBox t11;
+
+	t11.setText( QString::number(needed_Slice));
+	t11.exec();
+	QMessageBox t22;
+
+	t22.setText(QString::number(The_intensities[needed_Slice]));
+	t22.exec();
+
+
+
+
+
+
+
+
+
+
+
+	const char* inputImage = Full_Path_Names[needed_Slice].c_str();
+	const char* outputImage = location.c_str();
+
+	using InputPixelType = float;
+	using OutputPixelType = unsigned char;
+	using InputImageType = itk::Image<InputPixelType, Dimension>;
+	using OutputImageType = itk::Image<OutputPixelType, Dimension>;
+
+	using ReaderType = itk::ImageFileReader<InputImageType>;
+	ReaderType::Pointer reader = ReaderType::New();
+	reader->SetFileName(inputImage);
+
+	using RescaleType = itk::RescaleIntensityImageFilter<InputImageType, InputImageType>;
+	RescaleType::Pointer rescale = RescaleType::New();
+	rescale->SetInput(reader->GetOutput());
+	rescale->SetOutputMinimum(0);
+	rescale->SetOutputMaximum(itk::NumericTraits<OutputPixelType>::max());
+	//itk::NumericTraits<OutputPixelType>::max()
+	using FilterType = itk::CastImageFilter<InputImageType, OutputImageType>;
+	FilterType::Pointer filter = FilterType::New();
+	filter->SetInput(rescale->GetOutput());
+
+
+	using WriterType = itk::ImageFileWriter<OutputImageType>;
+	WriterType::Pointer writer = WriterType::New();
+	writer->SetFileName(outputImage);
+	writer->SetInput(filter->GetOutput());
+
+	try
+	{
+		writer->Update();
+	}
+	catch (itk::ExceptionObject& e)
+	{
+		std::cerr << "Error: " << e << std::endl;
+
+	}
+
+
+
+	cv::Mat image = cv::imread(outputImage);
+
+	// Check for failure
+	if (image.empty())
+	{
+		std::cout << "Could not open or find the image" << std::endl;
+		std::cin.get(); //wait for any key press
+
+	}
+
+	std::string windowName = "The Guitar"; //Name of the window
+
+	//cv::namedWindow(windowName); // Create a window
+
+	//imshow(windowName, image); // Show our image inside the created window.
+
+	//cv::waitKey(0); // Wait for any keystroke in the window
+
+	//cv::destroyWindow(windowName); //destroy the created window
+
+
+	cv::Mat src = cv::imread(outputImage, cv::IMREAD_GRAYSCALE);
+
+	cv::Mat dst;
+
+	// Set threshold and maxValue
+	double thresh = 200;
+	double maxValue = 255;
+	//cv::namedWindow("Oh MY", cv::CV_WINDOW_AUTOSIZE);
+	// Binary Threshold
+	cv::threshold(src, dst, thresh, maxValue, cv::THRESH_BINARY);
+	imshow("oh my", dst);
+	int morph_size = 2;
+	cv::Mat element = cv::getStructuringElement(
+		cv::MORPH_RECT, cv::Size(2 * morph_size + 1,
+			2 * morph_size + 1),
+		cv::Point(morph_size, morph_size));
+	cv::Mat  dill;
+	dilate(dst, dill, element,
+		cv::Point(-1, -1), 1);
+	imshow("dilate", dill);
+	cv::waitKey();
+	
+	
+	//cv::Mat img = itk::OpenCVImageBridge::ITKImageToCVMat<OutputImageType>(outputImage);
+	//cv::imshow("One", img);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	//imshow("see21231", dill);
+	//cv::waitKey(0);
+
+
+
+
+	/*
+	
+
+	using InputPixelType = signed short;
+	constexpr unsigned int InputDimension = 2;
+
+	using InputImageType = itk::Image<InputPixelType, InputDimension>;
+
+	using ReaderType = itk::ImageFileReader<InputImageType>;
+
+	// Software Guide : BeginCodeSnippet
+	using ImageIOType = itk::GDCMImageIO;
+
+	ImageIOType::Pointer gdcmImageIO = ImageIOType::New();
+
+	ReaderType::Pointer reader9 = ReaderType::New();
+	reader9->SetFileName(Full_Path_Names[1]);
+
+	reader9->SetImageIO(gdcmImageIO);
+	reader9->Update();
+	try
+	{
+		reader9->Update();
+	}
+	catch (const itk::ExceptionObject & e)
+	{
+		std::cerr << "exception in file reader " << std::endl;
+		std::cerr << e << std::endl;
+	
+	}
+	// Software Guide : EndCodeSnippet
+
+
+	using Writer1Type = itk::ImageFileWriter<InputImageType>;
+
+	Writer1Type::Pointer writer1 = Writer1Type::New();
+
+	writer1->SetFileName(ZORO);
+	writer1->SetInput(reader9->GetOutput());
+
+	writer1->SetImageIO(gdcmImageIO);
+	writer1->Update();
+	try
+	{
+		writer1->Update();
+	}
+	catch (const itk::ExceptionObject & e)
+	{
+		std::cerr << "exception in file writer " << std::endl;
+		std::cerr << e << std::endl;
+
+	}
+	
+
+
+
+	vtkNew<vtkDICOMImageReader> reader996;
+	reader996->SetFileName(ZORO.c_str());
+	reader996->Update();
+
+
+	vtkNew<vtkImageViewer2> imageViewer;
+	//imageViewer->SetSliceOrientationToXY();
+	imageViewer->SetInputConnection(reader996->GetOutputPort());
+	vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+	imageViewer->SetupInteractor(mInteractor);
+	imageViewer->SetRenderWindow(ui->openGLWidget->GetRenderWindow());
+	imageViewer->Render();
+
+
+
+	auto image = reader996->GetOutput();
+	double * range = image->GetPointData()->GetScalars()->GetRange();
+	imageViewer->SetColorLevel(0.5 * (range[0] + range[1]));
+	imageViewer->SetColorWindow(range[1] - range[0]);
+	renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+	imageViewer->SetSlice(ui->horizontalSlider->value());
+	imageViewer->GetRenderer()->ResetCamera();
+	imageViewer->Render();
+	renderWindowInteractor->Start();
+
+
+
+
+
+	*/
+
+
+
+
+
+	
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
