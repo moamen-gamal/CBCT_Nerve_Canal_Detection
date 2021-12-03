@@ -163,7 +163,8 @@
 #define VTI_FILETYPE 1
 #define MHA_FILETYPE 2
 
-
+#include "opencv2/imgproc.hpp"
+#include "opencv2/highgui.hpp"
 
 #include "vtkCamera.h"
 #include "vtkColorTransferFunction.h"
@@ -1200,6 +1201,20 @@ std::vector<std::string>XYZEER;
 double the_counter_Most_dialated=0;
 std::vector<double>The_intensities;
 double needed_Slice;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void MainWindow::DeleteThisFun()
 {
 
@@ -1314,15 +1329,20 @@ void MainWindow::DeleteThisFun()
 		// Binary Threshold
 		cv::threshold(src, dst, thresh, maxValue, cv::THRESH_BINARY);
 		//imshow("oh my", dst);
-		int morph_size = 2;
+		int morph_size = 1;
 		cv::Mat element = cv::getStructuringElement(
 			cv::MORPH_RECT, cv::Size(2 * morph_size + 1,
 				2 * morph_size + 1),
 			cv::Point(morph_size, morph_size));
 		cv::Mat  dill;
+		cv::Mat  dull;
 		dilate(dst, dill, element,
 			cv::Point(-1, -1), 1);
-		//imshow("dilate", dill);
+		dilate(dill, dull, element,
+			cv::Point(-1, -1), 1);
+
+		imshow("dilate", dill);
+		imshow("dilateNEWWWWWW", dull);
 		//cv::waitKey();
 		//cv::Mat img = itk::OpenCVImageBridge::ITKImageToCVMat<OutputImageType>(outputImage);
 		//cv::imshow("One", img);
@@ -1334,8 +1354,8 @@ void MainWindow::DeleteThisFun()
 			{
 				if ((int)dill.at<cv::Vec3b>(i, j)[0] > 40) {
 					the_counter_Most_dialated++;
-					std::string DATA = " X:  " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[0]) + " Y: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[1]) + " Z: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[2]);
-					XYZEER.push_back(DATA);
+					//std::string DATA = " R:  " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[0]) + " G: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[1]) + " B: " + std::to_string((int)dill.at<cv::Vec3b>(i, j)[2]);
+					//XYZEER.push_back(DATA);
 				}
 				if (dill.type() == CV_8UC1)
 				{
@@ -1475,19 +1495,373 @@ void MainWindow::DeleteThisFun()
 	//cv::namedWindow("Oh MY", cv::CV_WINDOW_AUTOSIZE);
 	// Binary Threshold
 	cv::threshold(src, dst, thresh, maxValue, cv::THRESH_BINARY);
-	imshow("oh my", dst);
+	
 	int morph_size = 2;
 	cv::Mat element = cv::getStructuringElement(
-		cv::MORPH_RECT, cv::Size(2 * morph_size + 1,
-			2 * morph_size + 1),
+		cv::MORPH_RECT, cv::Size(20 ,
+			20),
 		cv::Point(morph_size, morph_size));
 	cv::Mat  dill;
 	dilate(dst, dill, element,
 		cv::Point(-1, -1), 1);
+
+	//cv::Mat NEWCONNECTED;
+
+	//cv::connectedComponents(dill, NEWCONNECTED, 8, CV_8UC3);
+	
+	//imshow("Connected_component", NEWCONNECTED);
+	/*
+	cv::Mat skel;
+
+	cv::Mat temp(dill.size(), CV_8UC3);
+
+	cv::Mat element2 = cv::getStructuringElement(cv::MORPH_CROSS, cv::Size(3, 3));
+
+	bool done;
+	do
+
+	{
+		cv::morphologyEx(dill, temp, cv::MORPH_OPEN, element2);
+		cv::bitwise_not(temp, temp);
+		cv::bitwise_and(dill, temp, temp);
+		cv::bitwise_or(skel, temp, skel);
+		cv::erode(dill, dill, element2);
+		double max;
+		cv::minMaxLoc(dill, 0, &max);
+		done = (max == 0);
+	} while (false);
+
+	cv::imshow("Skeleton", skel);
+
+	*/
+
+
+
+
+	cv::Mat dill_blurred_with_3x3_kernel;
+	GaussianBlur(dill, dill_blurred_with_3x3_kernel, cv::Size(3, 3), 0);
+
+	//Blur the image with 5x5 Gaussian kernel
+	cv::Mat dill_blurred_with_5x5_kernel;
+	GaussianBlur(dill, dill_blurred_with_5x5_kernel, cv::Size(5, 5), 0);
+
+	//Define names of the windows
+	//std::string window_name = "BeforeGaussin";
+	//std::string window_name_blurred_with_3x3_kernel = "After Blurred with 3 x 3 Gaussian Kernel";
+	//std::string window_name_blurred_with_5x5_kernel = "After Blurred with 5 x 5 Gaussian Kernel";
+
+	// Create windows with above names
+	//cv::namedWindow(window_name);
+	//cv::namedWindow(window_name_blurred_with_3x3_kernel);
+	//cv::namedWindow(window_name_blurred_with_5x5_kernel);
+
+	// Show our images inside the created windows.
+	//imshow("originaldill", dill);
+	int lowThreshold = 0;
+	const int max_lowThreshold = 100;
+	const int ratio = 3;
+	const int kernel_size = 3;
+	//const char* window_name = "Edge Map";
+
+	cv::Mat  detected_edges2;
+	cv::Mat  detected_edges3;
+	cv::Mat  detected_edges4;
+	cv::Mat  detected_edges5;
+	cv::Mat Found_Contors;
+	cv::blur(dill_blurred_with_5x5_kernel, detected_edges2, cv::Size(3, 3));
+	cv::blur(dill_blurred_with_5x5_kernel, detected_edges3, cv::Size(3, 3));
+	
+
+
+
+	cv::Canny(detected_edges2, detected_edges2, lowThreshold, lowThreshold*ratio, kernel_size);
+	cv::Canny(detected_edges3, detected_edges3, lowThreshold, lowThreshold*ratio, 5);
+	
+	
+	
+	std::vector<std::vector<cv::Point> > contours;
+	std::vector<cv::Vec4i> hierarchy;
+	std::vector<std::vector<cv::Point> > contours2;
+	std::vector<cv::Vec4i> hierarchy2;
+	cv::Mat dst3 = cv::Mat::zeros(detected_edges2.rows, detected_edges2.cols, CV_8UC3);
+	cv::Mat dst4 = cv::Mat::zeros(detected_edges3.rows, detected_edges3.cols, CV_8UC3);
+	cv::findContours(detected_edges2, contours, hierarchy,
+		CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+
+
+	cv::findContours(detected_edges3, contours2, hierarchy2,
+		CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+	// iterate through all the top-level contours,
+	// draw each connected component with its own random color
+	int idx = 0;
+	int idx2 = 0;
+	
+	for (; idx >= 0; idx = hierarchy[idx][0])
+	{
+		cv::Scalar color(rand() & 255, rand() & 255, rand() & 255);
+		if (color.val[2] > 100 && color.val[2] < 103) {
+
+			cv::drawContours(dst3, contours, idx, color, CV_FILLED, 8, hierarchy);
+
+		}
+
+
+		if (color.val[2] > 170  && color.val[1]>150  && color.val[0]>100) {
+
+		cv::drawContours(dst4, contours2, idx, color, CV_FILLED, 8, hierarchy2);
+		}
+
+	}
+
+	
+
+	cv::Mat diffImage;
+	cv::absdiff(dst3, dst4, diffImage);
+
+	cv::Mat foregroundMask = cv::Mat::zeros(diffImage.rows, diffImage.cols, CV_8UC1);
+
+	float threshold = 30.0f;
+	float dist;
+
+	
+
+
+
+	cv::Mat  frame_threshold;
+	cv::Mat  frame_threshold2;
+	
+	cv::inRange(diffImage, cv::Scalar(100,100,100), cv::Scalar(255, 255,255), frame_threshold);
+	cv::Mat dst54 = cv::Mat::zeros(frame_threshold.rows, frame_threshold.cols, CV_8UC3);
+	std::vector<std::vector<cv::Point> > contours54;
+	std::vector<cv::Vec4i> hierarchy54;
+	cv::findContours(frame_threshold, contours54, hierarchy54,
+		CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+	int idx54 = 0;
+	for (; idx54 >= 0; idx54 = hierarchy54[idx54][0])
+	{
+		cv::Scalar color(rand() & 255, rand() & 255, rand() & 255);
+		if (color.val[2] <= 105) 
+		{
+			cv::drawContours(dst54, contours54, idx54, color, CV_FILLED, 8, hierarchy54);
+		}
+	}
+
+	cv::inRange(dst54, cv::Scalar(40, 40, 40), cv::Scalar(255, 255, 255), frame_threshold2);
+	/*
+	for (int i = 0; i < 100; i++) {
+		for (int y = i; y < frame_threshold2.rows; ++y)
+			for (int x = i; x < frame_threshold2.cols; ++x)
+			{
+				cv::Vec3b & color = image.at<cv::Vec3b>(y, x);
+
+				if (y > (frame_threshold2.rows / 2)) {
+					// ... do something to the color ....
+					color[0] = 0;
+					color[1] = 0;
+					color[2] = 0;
+
+					// set pixel
+					frame_threshold2.at<cv::Vec3b>(cv::Point(x, y)) = color;
+				}
+			}
+	}
+	
+	
+	*/
+
+	
+	/*
+	cv::blur(frame_threshold2, detected_edges5, cv::Size(3, 3));
+	cv::Canny(detected_edges5, detected_edges5, lowThreshold, lowThreshold*ratio, 5);
+
+	std::vector<std::vector<cv::Point> > contours99;
+	std::vector<cv::Vec4i> hierarchy99;
+	
+	
+	cv::Mat dst99= cv::Mat::zeros(detected_edges5.rows, detected_edges5.cols, CV_8UC3);
+	cv::findContours(detected_edges5, contours99, hierarchy99,
+		CV_RETR_CCOMP, CV_CHAIN_APPROX_SIMPLE);
+
+
+
+	int idx99 = 0;
+
+
+	for (; idx99 >= 0; idx99 = hierarchy99[idx99][0])
+	{
+		cv::Scalar color(rand() & 255, rand() & 255, rand() & 255);
+		//if (color.val[2] > 100 && color.val[2] < 103) {
+
+		cv::drawContours(dst99, contours99, idx99, color, CV_FILLED, 8, hierarchy99);
+
+		//}
+
+
+
+	}
+
+	*/
+	cv::Mat Bimage(600, 600, CV_8UC3, cv::Scalar(0, 0, 0));
+	cv::Mat Bimage2(600, 600, CV_8UC3, cv::Scalar(0, 0, 0));
+	
+	cv::Mat Compined;
+	cv::Rect crop(1, 1, 330, 600);
+	cv::Range rows(1, 330);
+	cv::Range cols(1, 600);
+	cv::Mat rez = frame_threshold2(rows, cols);
+
+
+
+
+
+
+	int x = 300;
+	int y = 600;
+	int width = 600;
+	int height = 100;
+	// our rectangle...
+	cv::Rect rect(x, y, width, height);
+	// and its top left corner...
+	cv::Point pt1(x, y);
+	// and its bottom right corner.
+	cv::Point pt2(x + width, y + height);
+	// These two calls...
+	cv::rectangle(frame_threshold2, pt1, pt2, cv::Scalar(0, 0, 255),570);
+	//cv::rectangle(frame_threshold2, pt1, pt2, (0, 200, 255),540);
+	//cv::circle(frame_threshold2, cv::Point(100, 100), 63, cv::Scalar(0, 0, 255), 50);
+
+	// essentially do the same thing
+	//cv::rectangle(frame_threshold2, rect, cv::Scalar(0, 255, 0));
+
+
+
+	//cv::addWeighted(Bimage2, 0.9, Bimage, 0.1, 0,Compined);
+	/*
+	std::vector<int>xstorer;
+	std::vector<int>ystorer;
+	int numberz = 0;
+	for (int y = 0;y < rez.rows;y++)
+	{
+		for (int x = 0;x < rez.cols;x++)
+		{
+			// get pixel
+			cv::Vec3b & color = rez.at<cv::Vec3b>(y, x);
+			
+				xstorer.push_back(x);
+				ystorer.push_back(y);
+				numberz++;
+			
+
+			// set pixel
+			//image.at<Vec3b>(Point(x,y)) = color;
+			//if you copy value
+		}
+	}*/
+	/*
+	for (int i = 400;i < 1000;i++) {
+		for (int y = 0;y < Bimage.rows;y++)
+		{
+			for (int x = 0;x < Bimage.cols;x++)
+			{
+				// get pixel
+				cv::Vec3b & color = Bimage.at<cv::Vec3b>(y, x);
+				if (x == xstorer[i] || y == ystorer[i])
+				{
+					color[0] = 255;
+					color[1] = 255;
+					color[2] = 255;
+					color[3] = 1;
+
+				}
+				else
+				{
+					color[0] = 0;
+					color[1] = 0;
+					color[2] = 0;
+					color[3] = 0;
+				
+				}
+
+
+				// set pixel
+				Bimage.at<cv::Vec3b>(cv::Point(x,y)) = color;
+				//if you copy value
+			}
+		}
+	}
+	*/
+
+
+
+
+
+
+	
+
+	// let's downscale the image using new  width and height
+	int up_width = 600;
+	int up_height = 600;
+	//cv::Mat resized_up;
+	//resize up
+	//cv::resize(rez, resized_up, cv::Size(up_width, up_height), cv::INTER_AREA);
+	// Display Images and press any key to continue
+
+	//imshow("dillEight", resized_up);
+
+
+
+
+
+
+	
+
+
+
+	//imshow("dillFour", Compined);
+	imshow("dillFThree",rez);
+	imshow("dillFnin",Bimage);
+
+
+
+
+
+
+
+
+	//imshow("dillFtwo", dst99);
+	imshow("dillFone", frame_threshold2);
+	imshow("oh my", dst);
+	imshow("dilltwo", dst54);
+	imshow("dillG45888", frame_threshold);
+	imshow("dillG34", diffImage);
+	imshow("dillG23", dst3);
+	imshow("dillG24", dst4);
+
+
+
+
+
+
+
+
+	//imshow("found_Contors", Found_Contors);
+	imshow("Gdill1", dill_blurred_with_3x3_kernel);
+	imshow("Gdill2", dill_blurred_with_5x5_kernel);
 	imshow("dilate", dill);
+
+	
+	imshow("weeee", detected_edges2);
+	//dst2.create(dill_blurred_with_5x5_kernel.size(), dill_blurred_with_5x5_kernel.type());
+	//cvtColor(dill_blurred_with_5x5_kernel, src_gray2, cv::COLOR_BGR2GRAY);
+	//namedWindow(window_name, WINDOW_AUTOSIZE);
+	//cv::createTrackbar("Min Threshold:", "WEllWell", &lowThreshold, max_lowThreshold, CannyThreshold);
+	//CannyThreshold(0, 0);
+
+
 	cv::waitKey();
-	
-	
+	//cv::waitKey();
+
+
 	//cv::Mat img = itk::OpenCVImageBridge::ITKImageToCVMat<OutputImageType>(outputImage);
 	//cv::imshow("One", img);
 
