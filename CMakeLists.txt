@@ -17,11 +17,11 @@ set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_PREFIX_PATH $ENV{QTDIR})
 find_package(OpenGL)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-find_package(Qt5Xml REQUIRED)
-find_package(Qt5Widgets REQUIRED)
+find_package(Qt6Core REQUIRED)
+find_package(Qt6Gui REQUIRED)
+find_package(Qt6OpenGL REQUIRED)
+find_package(Qt6Xml REQUIRED)
+find_package(Qt6Widgets REQUIRED)
 find_package(VTK COMPONENTS 
   vtkCommonColor
   vtkCommonCore
@@ -80,9 +80,9 @@ target_include_directories(QtVTKProject PRIVATE ${INCLUDE_DIR})
 target_include_directories(QtVTKProject PRIVATE ${SOURCE_DIR})
 
 #===================== LINKING LIBRARIES =======================#
-target_link_libraries( QtVTKProject Qt5::OpenGL)
-target_link_libraries( QtVTKProject Qt5::Xml)
-target_link_libraries( QtVTKProject Qt5::Widgets)
+target_link_libraries( QtVTKProject Qt6::OpenGL)
+target_link_libraries( QtVTKProject Qt6::Xml)
+target_link_libraries( QtVTKProject Qt6::Widgets)
 target_link_libraries( QtVTKProject ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 target_link_libraries( QtVTKProject ${VTK_LIBRARIES})
 vtk_module_autoinit(
