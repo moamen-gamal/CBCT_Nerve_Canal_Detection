@@ -19,7 +19,7 @@ using namespace cv;
 int main()
 {
     /*Mat image = imread("picture.jpg", CV_LOAD_IMAGE_GRAYSCALE); */
-    string image_path = "C:\\Users\\moamen\\Desktop\\GP_Panorama\\CT_IMAGES\\DCM340.jpeg";
+    string image_path = "C:\\Users\\moamen\\Desktop\\GP_mandibular_canal_detection\\Sample Images\\DCM340.jpeg";
     Mat image = imread(image_path, IMREAD_GRAYSCALE);
 
 
@@ -71,7 +71,7 @@ int main()
 
     // display histogram
     //cv::imshow("Intensity Histogram", histImage);
-    cv::imshow("image", image);
+    //cv::imshow("image", image);
     // gauessian fitting and pick T thresholding value
    //double thresh = mean + w * sd
     // thresholding
@@ -83,7 +83,7 @@ int main()
     cv::Mat thresholdedImg;
     cv::threshold(image, thresholdedImg, thresh, maxval, 0);
 
-      cv::imshow("thresholded", thresholdedImg);
+      //cv::imshow("thresholded", thresholdedImg);
 
       //hole filling
        // Floodfill from point (0, 0)
@@ -104,7 +104,7 @@ int main()
 
          // cv::imshow("Floodfilled Image", im_floodfill);
           //cv::imshow("Inverted Floodfilled Image", im_floodfill_inv);
-          cv::imshow("Foreground", holeFilled);
+          //cv::imshow("Foreground", holeFilled);
           //morphological closing with element
           //disk radius 15 pixels
 
@@ -116,7 +116,7 @@ int main()
           morphologyEx(holeFilled, closingImg,
               MORPH_CLOSE, element,
               Point(-1, -1), 2);
-          cv::imshow("closingImg", closingImg);
+          //cv::imshow("closingImg", closingImg);
 
               Mat labelImage(image.size(), CV_32S),dst(image.size(), CV_8UC3);
               int nLabels = connectedComponents(closingImg, labelImage, 8);
@@ -136,20 +136,41 @@ int main()
                        }
                    }
 
-              imshow( "Connected Components", dst );
+          imshow( "Connected Components", dst );
           cvtColor(dst, dst, COLOR_RGB2GRAY);
           //cv::imshow("stats",statistics);
           //cv::imshow("centroid",centroid);
           Mat blur;
           cv::blur(dst,blur,Size(9,9));
           //morphological thinning
-          cv::imshow("blurred",blur);
+          //cv::imshow("blurred",blur);
           Mat thiningImg;
 
           cv::ximgproc::thinning (blur, thiningImg ,  0);
           cv::imshow("thinned", thiningImg);
           cv::imwrite("skeleton.jpeg",thiningImg);
-          cv::waitKey();
+
+
+          cv::Mat finalImage;
+             cv::Mat mimage;
+             cv::Mat cimage;
+            //cv::Size ml(600,600);
+             finalImage = cv::imread("C:\\Users\\Panorama.jpeg", CV_8UC1);
+             //image.setTo(cv::Scalar(0, 0, 0));
+             //cv::resize(image, mimage, ml, 1, 1 , 0);
+             //cv::Point2d pn(1, 1);
+             //cv::linearPolar(image, mimage,pn , 5 ,1);
+             cv::Mat element3 = cv::getStructuringElement(0, cv::Size(2,2), cv::Point(1, 1));
+             cv::morphologyEx(finalImage, mimage, 2 , element3);
+             //cv::imwrite("E:\JPEG_DICOM\Panorama18.jpeg", mimage);
+             cv::Mat element1 = cv::getStructuringElement(0, cv::Size(2, 2), cv::Point(1,1));
+             cv::morphologyEx(mimage, cimage, 3, element1);
+             //cv::imwrite("E:\JPEG_DICOM\Panorama22.jpeg", cimage);
+            cv::imshow("cimage", cimage);
+            cv::Mat dst22(finalImage.size(),CV_8UC1);
+            cv::resize(cimage, dst22, dst22.size(), 1,1, WARP_FILL_OUTLIERS);
+            cv::imshow("inter",dst22);
+            cv::waitKey();
           return 0;
 }
 

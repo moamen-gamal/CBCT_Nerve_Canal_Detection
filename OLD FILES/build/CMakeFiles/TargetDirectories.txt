@@ -1,0 +1,3 @@
+C:/Users/moamen/Desktop/GP_mandibular_canal_detection/OLD FILES/build/CMakeFiles/QtVTKProject.dir
+C:/Users/moamen/Desktop/GP_mandibular_canal_detection/OLD FILES/build/CMakeFiles/ALL_BUILD.dir
+C:/Users/moamen/Desktop/GP_mandibular_canal_detection/OLD FILES/build/CMakeFiles/ZERO_CHECK.dir
