@@ -1,27 +1,18 @@
 cmake_minimum_required(VERSION 3.17)
 
 project(QtVTKProject)
-foreach(p
-    ## Only policies introduced after the cmake_minimum_required
-    ## version need to explicitly be set to NEW.
-    CMP0070 #3.10.0 Define file(GENERATE) behavior for relative paths.
-    CMP0071 #3.10.0 Let AUTOMOC and AUTOUIC process GENERATED files.
-    )
-  if(POLICY ${p})
-    cmake_policy(SET ${p} NEW)
-  endif()
-endforeach()
+
 #======================= INCLUSION OF Qt =======================#
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTOUIC ON)
 set(CMAKE_PREFIX_PATH $ENV{QTDIR})
 find_package(OpenGL)
-find_package(Qt5Core REQUIRED)
-find_package(Qt5Gui REQUIRED)
-find_package(Qt5OpenGL REQUIRED)
-find_package(Qt5Xml REQUIRED)
-find_package(Qt5Widgets REQUIRED)
+find_package(Qt6Core REQUIRED)
+find_package(Qt6Gui REQUIRED)
+find_package(Qt6OpenGL REQUIRED)
+find_package(Qt6Xml REQUIRED)
+find_package(Qt6Widgets REQUIRED)
 find_package(VTK COMPONENTS 
   vtkCommonColor
   vtkCommonCore
@@ -29,8 +20,6 @@ find_package(VTK COMPONENTS
   vtkIOImage
   vtkIOXML
   vtkImagingCore
-  vtkImagingMorphological
-  vtkImagingStatistics
   vtkInteractionStyle
   vtkInteractionWidgets
   vtkRenderingContextOpenGL2
@@ -40,12 +29,12 @@ find_package(VTK COMPONENTS
   vtkRenderingOpenGL2
   vtkRenderingVolume
   vtkRenderingVolumeOpenGL2
-  QUIET
-  
 )
 
+
+
 #======================= INCLUSION OF VTK ======================#
-set(VTK_DIR $ENV{VTK_DIR})
+set(VTK_DIR $ENV{VTK_DIR_Debug})
 find_package(VTK REQUIRED)
 include(${VTK_USE_FILE})
 
@@ -74,15 +63,16 @@ elseif(UNIX)
     add_executable(QtVTKProject ${SOURCES})
 endif()
 
+
 # Add the target includes
 target_include_directories(QtVTKProject PRIVATE ${FORMS_DIR})
 target_include_directories(QtVTKProject PRIVATE ${INCLUDE_DIR})
 target_include_directories(QtVTKProject PRIVATE ${SOURCE_DIR})
 
 #===================== LINKING LIBRARIES =======================#
-target_link_libraries( QtVTKProject Qt5::OpenGL)
-target_link_libraries( QtVTKProject Qt5::Xml)
-target_link_libraries( QtVTKProject Qt5::Widgets)
+target_link_libraries( QtVTKProject Qt6::OpenGL)
+target_link_libraries( QtVTKProject Qt6::Xml)
+target_link_libraries( QtVTKProject Qt6::Widgets)
 target_link_libraries( QtVTKProject ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 target_link_libraries( QtVTKProject ${VTK_LIBRARIES})
 vtk_module_autoinit(
@@ -91,13 +81,16 @@ vtk_module_autoinit(
     )
 
 # Find ITK.
-find_package(ITK REQUIRED)
+find_package(ITK)
 include(${ITK_USE_FILE})
-
+include_directories( ${ITK_INCLUDE_DIRS} )
 target_link_libraries(QtVTKProject ${ITK_LIBRARIES})
+
 find_package( OpenCV REQUIRED )
 include_directories( ${OpenCV_INCLUDE_DIRS} )
 target_link_libraries( QtVTKProject ${OpenCV_LIBS} )
+
+
 find_package(DCMTK REQUIRED)
 
 include_directories(${DCMTK_INCLUDE_DIRS})
@@ -108,3 +101,4 @@ if(DICOM_FOUND)
   include(${DICOM_USE_FILE})
 endif()
 set(VTK_DICOM_LIBRARIES vtkDICOM)
+

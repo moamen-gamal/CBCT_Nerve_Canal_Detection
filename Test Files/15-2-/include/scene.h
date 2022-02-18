@@ -7,6 +7,7 @@
 #include <QAction>
 #include <QGraphicsView>
 #include <QKeyEvent>
+#include<qlist.h>
 
 class Scenez : public QGraphicsScene
 {
