@@ -1,12 +1,12 @@
 #include <iostream>
-#include <QtWidgets\qapplication.h>
 #include <mainwindow.h>
+#include <QApplication>
+#include <QtWidgets\qapplication.h>
 #include <qgraphicsview.h>
 #include <qgraphicsitem.h>
 #include <qgraphicseffect.h>
 #include <qmessagebox.h>
 #include <qobject.h>
-#include <QApplication>
 #include <QGraphicsEllipseItem>
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -25,61 +25,61 @@
 #include <QStyleOptionGraphicsItem>
 #include <qdebug.h>
 #include <stdlib.h>
+#include<qdebug.h>
+//QString myImgName = "myimg.png";
+//static QImage *myImg;
 
-QString myImgName = "myimg.png";
-static QImage *myImg;
+//static const int imageRTTI = 984376;
 
-static const int imageRTTI = 984376;
-
-class ImageItem : public QGraphicsRectItem
-{
-public:
-	ImageItem(QImage img);
-	int rtti() const { return imageRTTI; }
-	void advance(int phase);
-protected:
-	void paint(QPainter *, const QStyleOptionGraphicsItem *option, QWidget *widget);
-private:
-	QImage image;
-	QPixmap pixmap;
-	int state;
-};
-
-
-void ImageItem::advance(int phase)
-{
-	if (state == 0)
-	{
-		moveBy(0, 30);
-		state = 1;
-	}
-	else
-	{
-		moveBy(0, -30);
-		state = 0;
-	}
-}
+//class ImageItem : public QGraphicsRectItem
+//{
+//public:
+//	ImageItem(QImage img);
+//	int rtti() const { return imageRTTI; }
+//	void advance(int phase);
+//protected:
+//	void paint(QPainter *, const QStyleOptionGraphicsItem *option, QWidget *widget);
+//private:
+//	QImage image;
+//	QPixmap pixmap;
+//	int state;
+//};
 
 
-ImageItem::ImageItem(QImage img)
-	: image(img)
-{
-	state = 0;
-	setRect(0, 0, image.width(), image.height());
-	setFlag(ItemIsMovable);
-	pixmap = pixmap.fromImage(image, Qt::OrderedAlphaDither);
+//void ImageItem::advance(int phase)
+//{
+//	if (state == 0)
+//	{
+//		moveBy(0, 30);
+//		state = 1;
+//	}
+//	else
+//	{
+//		moveBy(0, -30);
+//		state = 0;
+//	}
+//}
 
-}
 
-void ImageItem::paint(QPainter *p, const QStyleOptionGraphicsItem *option, QWidget *)
-{
-	p->drawPixmap(option->exposedRect, pixmap, option->exposedRect);
-}
+//ImageItem::ImageItem(QImage img)
+//	: image(img)
+//{
+//	state = 0;
+//	setRect(0, 0, image.width(), image.height());
+//	setFlag(ItemIsMovable);
+//	pixmap = pixmap.fromImage(image, Qt::OrderedAlphaDither);
+
+//}
+
+//void ImageItem::paint(QPainter *p, const QStyleOptionGraphicsItem *option, QWidget *)
+//{
+//	p->drawPixmap(option->exposedRect, pixmap, option->exposedRect);
+//}
 
 int main(int argc, char * argv[])
 {
-	QApplication app(argc, argv);
-	MainWindow t;
-	t.show();
+	QApplication app(argc, argv); 
+    MainWindow winodw;
+    winodw.show();
 	app.exec();
 }

@@ -15,6 +15,7 @@ public:
     enum Mode {NoMode, SelectObject, DrawLine};
     Scenez(QObject* parent = 0);
     void setMode(Mode mode);
+     QString dist;
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *event);
     void mouseMoveEvent(QGraphicsSceneMouseEvent *event);

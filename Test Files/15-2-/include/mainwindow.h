@@ -29,6 +29,14 @@
 #include <dcmtk/dcmimgle/dcmimage.h>
 #include<SceneManger.h>
 #include<cvQTconvert.h>
+#include<QVTKOpenGLWidget.h>
+#include<QVTKOpenGLStereoWidget.h>
+
+#include <QtCharts\qsplineseries.h>
+#include <QtCharts\qchart.h>
+#include <QtCharts\qchartview.h>
+
+
 namespace Ui {
 class MainWindow;
 }
@@ -43,55 +51,67 @@ public:
 
 private:
     Ui::MainWindow *ui;
-	QGraphicsEllipseItem *Ellipse;
 
     std::vector<std::string> DICOM_Names;
     std::vector<std::string> Full_Path_Names;
     QString folderPath;
 
+    SceneManager sceneManager;
+
     std::vector<DicomImage*>DicomImages;
     std::vector<cv::Mat*> axialImages;
-    std::vector<cv::Mat*>coronalImages;
-    std::vector<cv::Mat*>sagittalImages;
+    std::vector<cv::Mat*> coronalImages;
+    std::vector<cv::Mat*> sagittalImages;
 
-    int Histogram[256];
-    double mean,stddev,variance;
+    std::vector<int> histogram;
+    float mean=34,stddev=10,variance;
+
     std::map<std::string,std::string>dicomTags;
-
-public:
-    std::vector<double>curveCtrlX;
+    int offset;
+    cv::Mat skeleton;
+    std::vector<double> curveCtrlX;
     std::vector<double> curveCtrlY;
     std::vector<double> curveShiftX;
     std::vector<double> curveShiftY;
-    int offset;
-    SceneManager sceneManager;
-    float slope;
-    int maxSliceID;
-public slots:
-    void openFolder();
+
+    int renderMode =0;
+
+public:
     void grayTransform();
     void MPR();
-    void DicomTags(std::string FolderPath);
-    int panoramaSliceSelect(std::vector<cv::Mat*>&Images);
-    cv::Mat skeletonGenerate(cv::Mat image);
-    void ctrlPtsCalculate(cv::Mat skeleton);
-    int Offset(cv::Mat img);
-    cv::Mat constructPanorama(int shiftValue);
-    void shiftCurve(int shift);
-    void constructSerialView(int Slider_Value);
-    float NegativeSlope(int x1,int x2,int y1,int y2);
-    float NegativeSlopeArc(int x1,int x2,int y1,int y2);
 
 public slots:
-    void fullScreen(int id);
-    void minScreen(int id);
-    void setSliders();
-    void setViews();
+    void openFolder();
+    void init();
+    void initSliders();
+    void initViews();
+
     void axialSliderCtrl();
     void coronalSliderCtrl();
     void sagittalSliderCtrl();
-    void panoramaSliderCtrl();
-    void serialSliderCtrl();
+
+    void axialViewCtrl(int id);
+    void sagittalViewCtrl(int id);
+    void coronalViewCtrl(int id);
+
+    void maxScreenAxial();
+    void minScreenAxial();
+
+    void maxScreenCoronal();
+    void minScreenCoronal();
+
+    void maxScreenSagittal();
+    void minScreenSagittal();
+
+    void statistics();
+    void DicomTags(std::string Path);
+
+    int panoramaSliceSelect();
+    cv::Mat SkeletonGenerate(int id);
+    int Offset(cv::Mat img);
+    void ctrlPtsCalculate(cv::Mat skeleton);
+    void shiftCurve(int shift);
+    cv::Mat constructPanorama(int shiftValue);
 
 };
 

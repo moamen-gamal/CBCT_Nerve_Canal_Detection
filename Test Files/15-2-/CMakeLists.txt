@@ -13,6 +13,7 @@ find_package(Qt6Gui REQUIRED)
 find_package(Qt6OpenGL REQUIRED)
 find_package(Qt6Xml REQUIRED)
 find_package(Qt6Widgets REQUIRED)
+find_package(Qt6Charts REQUIRED)
 find_package(VTK COMPONENTS 
   vtkCommonColor
   vtkCommonCore
@@ -73,6 +74,7 @@ target_include_directories(QtVTKProject PRIVATE ${SOURCE_DIR})
 target_link_libraries( QtVTKProject Qt6::OpenGL)
 target_link_libraries( QtVTKProject Qt6::Xml)
 target_link_libraries( QtVTKProject Qt6::Widgets)
+target_link_libraries( QtVTKProject Qt6::Charts)
 target_link_libraries( QtVTKProject ${QT_LIBRARIES} ${OPENGL_LIBRARIES})
 target_link_libraries( QtVTKProject ${VTK_LIBRARIES})
 vtk_module_autoinit(

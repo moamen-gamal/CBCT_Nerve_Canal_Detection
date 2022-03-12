@@ -3,7 +3,7 @@
 #include <QtMath>
 #include "All_Librarries.h"
 
- QString dist;
+
 
 
 Scenez::Scenez(QObject* parent): QGraphicsScene(parent)
@@ -26,9 +26,10 @@ void Scenez::setMode(Mode mode){
         makeItemsControllable(true);
         vMode = QGraphicsView::RubberBandDrag;
     }
-    QGraphicsView* mView = views().at(0);
+    /*QGraphicsView* mView = views().at(0);
     if(mView)
         mView->setDragMode(vMode);
+    */
 }
 
 void Scenez::makeItemsControllable(bool areControllable){
