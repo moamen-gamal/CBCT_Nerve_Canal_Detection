@@ -30,7 +30,9 @@
 #include<SceneManger.h>
 #include<cvQTconvert.h>
 #include<QVTKOpenGLWidget.h>
+#include<QVTKOpenGLWindow.h>
 #include<QVTKOpenGLStereoWidget.h>
+#include<QVTKOpenGLNativeWidget.h>
 
 #include <QtCharts\qsplineseries.h>
 #include <QtCharts\qchart.h>
@@ -74,6 +76,8 @@ private:
     std::vector<double> curveShiftX;
     std::vector<double> curveShiftY;
 
+    double lightIntensity = 4096;
+
     int renderMode =0;
 
 public:
@@ -93,6 +97,7 @@ public slots:
     void axialViewCtrl(int id);
     void sagittalViewCtrl(int id);
     void coronalViewCtrl(int id);
+    //void volumeSliderCtrl();
 
     void maxScreenAxial();
     void minScreenAxial();
@@ -110,8 +115,10 @@ public slots:
     cv::Mat SkeletonGenerate(int id);
     int Offset(cv::Mat img);
     void ctrlPtsCalculate(cv::Mat skeleton);
-    void shiftCurve(int shift);
-    cv::Mat constructPanorama(int shiftValue);
+    void shiftCurve(float shift);
+    cv::Mat panoramaProjection(float shiftValue);
+    cv::Mat serialProjection(int id);
+    //void volumeRender(int Mode);
 
 };
 

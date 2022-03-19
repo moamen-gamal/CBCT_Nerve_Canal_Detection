@@ -503,7 +503,7 @@
             </widget>
            </item>
            <item row="1" column="0" rowspan="3">
-            <widget class="QOpenGLWidget" name="volumeView">
+            <widget class="QVTKOpenGLNativeWidget" name="volumeView">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -2379,6 +2379,13 @@ selection-background-color: rgb(143, 143, 143);</string>
    </property>
   </action>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QVTKOpenGLNativeWidget</class>
+   <extends>QOpenGLWidget</extends>
+   <header>qvtkopenglnativewidget.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

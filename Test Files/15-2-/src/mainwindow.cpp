@@ -12,12 +12,15 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->coronalMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenCoronal);
     QObject::connect(ui->sagittalMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenSagittal);
     QObject::connect(ui->sagittalMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenSagittal);
+
     QObject::connect(ui->axialSlider, &QSlider::valueChanged,
                          this, &MainWindow::axialSliderCtrl);
     QObject::connect(ui->coronalSlider, &QSlider::valueChanged,
                          this, &MainWindow::coronalSliderCtrl);
     QObject::connect(ui->sagittalSlider, &QSlider::valueChanged,
                          this, &MainWindow::sagittalSliderCtrl);
+//    QObject::connect(ui->volumeSlider, &QSlider::valueChanged,
+//                         this, &MainWindow::volumeSliderCtrl);
 
     MainWindow::init();
 
@@ -82,8 +85,7 @@ void MainWindow::openFolder() {
     int id =MainWindow::panoramaSliceSelect();
     cv::Mat skeleton = MainWindow::SkeletonGenerate(id);
     MainWindow::ctrlPtsCalculate(skeleton);
-    cv::Mat panorama = MainWindow::constructPanorama(0.75*offset);
-    cv::imshow("panorama",panorama);
+    cv::Mat panorama = MainWindow::constructPanorama(offset/2);
     MainWindow::MPR();
     MainWindow::initViews();
     MainWindow::initSliders();
@@ -127,6 +129,7 @@ void MainWindow::DicomTags(std::string FolderPath) {
         std::string tagkey = itr->first;
         std::string tagvalue = entryvalue->GetMetaDataObjectValue();
         dicomTags.insert(std::pair<std::string, std::string>(tagkey, tagvalue));
+        std::cout<<"key is "<<tagkey<<"  value is "<<tagvalue<<std::endl;
         }
         ++itr;
     }
@@ -181,6 +184,8 @@ void MainWindow::grayTransform() {
        DicomImages.push_back(new DicomImage(Full_Path_Names[i].c_str()));
        axialImages.push_back(new cv::Mat(int(DicomImages[i]->getWidth()), int(DicomImages[i]->getHeight()),
                                          CV_16U,(short*)DicomImages[i]->getOutputData(16)));
+       cv::imshow("axial",*axialImages[i]);
+       cv::waitKey(0);
 
     }
     for(int i=0;i<256;i++){
@@ -425,27 +430,32 @@ void MainWindow::ctrlPtsCalculate(cv::Mat skeleton){
 }
 }
 
-void MainWindow::shiftCurve(int shift) {
+void MainWindow::shiftCurve(float shift) {
+
     tk::spline curve(curveCtrlX, curveCtrlY, tk::spline::cspline);
     std::vector<double>derivs;
+    if(curveShiftX.size() != 0){
+        curveShiftX.clear();
+        curveShiftY.clear();
+    }
     for (int i = 0;i < curveCtrlX.size();i++) {
+
         derivs.push_back(curve.deriv(1, curveCtrlX[i]));
         curveShiftX.push_back(0);
         curveShiftY.push_back(0);
-
     }
-    if (shift - (float(offset) / 2) > 0) {
-        double shiftValue = 1 / (float(shift));
+    if (shift - (offset / 2) > 0) {
+        float shiftValue = (shift - offset/2 );
         for (int i = 0;i < curveCtrlX.size();i++) {
-            curveShiftY[i] = curveCtrlY[i] - (shiftValue)*((offset / 2) / sqrt(1 + pow(derivs[i], 2)));
-            curveShiftX[i] = curveCtrlX[i] + (shiftValue)*((derivs[i] * (offset / 2)) / sqrt(1 + pow(derivs[i], 2)));
+            curveShiftY[i] = curveCtrlY[i] - (shiftValue / sqrt(1 + pow(derivs[i], 2)));
+            curveShiftX[i] = curveCtrlX[i] + ((derivs[i] * shiftValue) / sqrt(1 + pow(derivs[i], 2)));
         }
     }
-    else if (shift - (float(offset) / 2) < 0) {
-        double shiftValue = 1 / (float(shift));
+    else if (shift - (offset / 2) < 0) {
+        float shiftValue = (offset/2 - shift);
         for (int i = 0;i < curveCtrlX.size();i++) {
-            curveShiftY[i] = curveCtrlY[i] + (shiftValue)*((offset / 2) / sqrt(1 + pow(derivs[i], 2)));
-            curveShiftX[i] = curveCtrlX[i] - (shiftValue)*((derivs[i] * (offset / 2)) / sqrt(1 + pow(derivs[i], 2)));
+            curveShiftY[i] = curveCtrlY[i] + (shiftValue / sqrt(1 + pow(derivs[i], 2)));
+            curveShiftX[i] = curveCtrlX[i] - ((derivs[i] * shiftValue) / sqrt(1 + pow(derivs[i], 2)));
         }
     }
     else {
@@ -456,24 +466,292 @@ void MainWindow::shiftCurve(int shift) {
             curveShiftY[i] = curveCtrlY[i];
         }
     }
+
 }
 
-cv::Mat MainWindow::constructPanorama(int shiftValue){
+
+cv::Mat MainWindow::panoramaProjection(float shiftValue){
     shiftCurve(shiftValue);
     tk::spline curve(curveShiftX,curveShiftY,tk::spline::cspline);
-    int colNum =curveShiftX[curveShiftX.size()-1] - curveShiftX[0];
+    int colNum =curveShiftX[curveShiftX.size()-1] - curveShiftX[0] +2;
     cv::Mat Panorama(axialImages.size(),colNum,CV_8UC1);
     for(int i=0;i<axialImages.size();i++){
-        int k =0;
+        int col=0;
         for(int j =curveShiftX[0];j<curveShiftX[curveShiftX.size()-1];j++){
-            if((j >axialImages[i]->cols||j < 0 ) || (curve(j)>axialImages[i]->rows || curve(j)< 0 )){
-                Panorama.at<uchar>(i,k) =0;
+            if(j < 0 || j> axialImages[i]->cols-1 || curve(j)<0 ||curve(j)>axialImages[i]->rows-1){
+                Panorama.at<uchar>(i,col) = 0;
             }
-            else
-                Panorama.at<uchar>(i,k) = axialImages[i]->at<uchar>(curve(j),j);
-            k++;
+            else{
+                Panorama.at<uchar>(i,col) = axialImages[i]->at<uchar>(curve(j),j);
+            }
+            col++;
         }
     }
     return Panorama;
 }
+cv::Mat MainWindow::serialProjection(int id){
+    tk::spline curve(curveCtrlX,curveCtrlY,tk::spline::cspline);
+    cv::Mat serial(axialImages.size(),203*3,CV_8UC1);
+    float slope = curve.deriv(1,id);
+    int point_x =id, point_y = curve(id);
+    int b = -1*slope*point_x+point_y;
+    for(int i =0;i<axialImages.size();i++){
+    int col=0;
+    for(int x =id-100;x<id+100;x++){
+       int y = slope*x+b;
+       if(x < 0 || x> axialImages[i]->cols-1 || y<0 ||y>axialImages[i]->rows-1){
+           serial.at<uchar>(i,col)=0;
+       }
+       else
+            serial.at<uchar>(i,col) = axialImages[i]->at<uchar>(y,x);
+       col++;
 
+    }
+    }
+    float slope_2 = curve.deriv(1,id+5);
+    int point_x_2 =id+5, point_y_2 = curve(id+5);
+    int b_2 = -1*slope_2*point_x_2+point_y_2;
+    for(int i =0;i<axialImages.size();i++){
+    int col=203;
+    for(int x =id+5-100;x<id+5+100;x++){
+       int y = slope_2*x+b_2;
+       if(x < 0 || x> axialImages[i]->cols-1 || y<0 ||y>axialImages[i]->rows-1){
+           serial.at<uchar>(i,col)=0;
+       }
+       else
+            serial.at<uchar>(i,col) = axialImages[i]->at<uchar>(y,x);
+       col++;
+
+    }
+    }
+    float slope_3 = curve.deriv(1,id+20);
+    int point_x_3 =id+20, point_y_3 = curve(id+20);
+    int b_3 = -1*slope_3*point_x_3+point_y_3;
+    for(int i =0;i<axialImages.size();i++){
+    int col=406;
+    for(int x =id+20-100;x<id+20+100;x++){
+       int y = slope_3*x+b_3;
+       if(x < 0 || x> axialImages[i]->cols-1 || y<0 ||y>axialImages[i]->rows-1){
+           serial.at<uchar>(i,col)=0;
+       }
+       else
+            serial.at<uchar>(i,col) = axialImages[i]->at<uchar>(y,x);
+       col++;
+    }
+    }
+    return serial;
+}
+
+//void MainWindow::volumeRender(int Mode)
+//{
+//    char* dirname = NULL;
+//    double opacityWindow = 4096;
+//    double opacityLevel = 2048;
+//    double reductionFactor = 1.0;
+//    double frameRate = 60.0;
+
+//    QDir  TheDirectory = folderPath;
+//    std::string welldoe = folderPath.toStdString();
+//    const char * location;
+//    location = welldoe.c_str();
+//    size_t size = strlen(location) + 1;
+//    dirname = new char[size];
+//    snprintf(dirname, size, "%s", location);
+
+
+
+//    vtkNew<vtkNamedColors> colors;
+//    vtkNew<vtkRenderer> renderer2;
+//    vtkNew<vtkRenderWindow> renWin;
+//    renWin->AddRenderer(renderer2);
+//    vtkNew<vtkRenderWindowInteractor> iren;
+//    iren->SetRenderWindow(renWin);
+//    iren->SetDesiredUpdateRate(frameRate );
+
+//    iren->GetInteractorStyle()->SetDefaultRenderer(renderer2);
+//    vtkSmartPointer<vtkAlgorithm> reader;
+//    vtkSmartPointer<vtkImageData> input;
+
+//    vtkNew<vtkDICOMImageReader> dicomReader;
+//    dicomReader->SetDirectoryName(folderPath.toUtf8().constData());
+//    dicomReader->Update();
+//    input = dicomReader->GetOutput();
+//    reader = dicomReader;
+
+//    int dim[3];
+//    input->GetDimensions(dim);
+//    vtkNew<vtkImageResample> resample;
+
+//    resample->SetInputConnection(reader->GetOutputPort());
+//    resample->SetAxisMagnificationFactor(0, reductionFactor);
+//    resample->SetAxisMagnificationFactor(1, reductionFactor);
+//    resample->SetAxisMagnificationFactor(2, reductionFactor);
+
+
+//    vtkNew<vtkVolume> volume;
+
+//    vtkNew<vtkFixedPointVolumeRayCastMapper> mapper;
+
+
+//    mapper->SetInputConnection(resample->GetOutputPort());
+
+
+//    double spacing[3];
+
+//    if (reductionFactor < 1.0)
+//    {
+//        resample->GetOutput()->GetSpacing(spacing);
+//    }
+//    else
+//    {
+//        input->GetSpacing(spacing);
+//    }
+
+
+
+//    // Create our transfer function
+//    vtkNew<vtkColorTransferFunction> colorFun;
+//    vtkNew<vtkPiecewiseFunction> opacityFun;
+//    // Create the property and attach the transfer functions
+//    vtkNew<vtkVolumeProperty> property;
+//    property->SetIndependentComponents(true);
+//    property->SetColor(colorFun);
+//    property->SetScalarOpacity(opacityFun);
+//    property->SetInterpolationTypeToLinear();
+//    // connect up the volume to the property and the mapper
+//    volume->SetProperty(property);
+//    volume->SetMapper(mapper);
+
+
+
+//    switch (Mode)
+//    {
+//        // MIP
+//        // Create an opacity ramp from the window and level values.
+//        // Color is white. Blending is MIP.
+//        // MIP
+//    case 0:
+//        colorFun->AddRGBSegment(0.0, 1.0, 1.0, 1.0, 255.0, 1.0, 1.0, 1.0);
+
+
+//        opacityFun->AddSegment(opacityLevel - 0.5 * opacityWindow, 0.0,
+//            lightIntensity, 1.0);
+
+
+
+//        mapper->SetBlendModeToMaximumIntensity();
+
+//        break;
+//    //bone
+//    case 1:
+//        colorFun->AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0);
+//        colorFun->AddRGBPoint(-1000, .62, .36, .18, 0.5, 0.0);
+//        colorFun->AddRGBPoint(-500, .88, .60, .29, 0.33, 0.45);
+//        colorFun->AddRGBPoint(3071, .83, .66, 1, 0.5, 0.0);
+
+//        opacityFun->AddPoint(-3024, 0, 0.5, 0.0);
+//        opacityFun->AddPoint(-1000, 0, 0.5, 0.0);
+//        opacityFun->AddPoint(-500, 1.0, 0.33, 0.45);
+//        opacityFun->AddPoint(3071, 1.0, 0.5, 0.0);
+
+//        mapper->SetBlendModeToComposite();
+//        property->ShadeOn();
+//        property->SetAmbient(0.1);
+//        property->SetDiffuse(0.9);
+//        property->SetSpecular(0.2);
+//        property->SetSpecularPower(10.0);
+//        property->SetScalarOpacityUnitDistance(0.8919);
+//        break;
+//        //skeletal
+//    case 2:
+//        colorFun->AddRGBPoint(-3024, 0, 0, 0, 0.5, 0.0);
+//        colorFun->AddRGBPoint(-155, .55, .25, .15, 0.5, .92);
+//        colorFun->AddRGBPoint(217, .88, .60, .29, 0.33, 0.45);
+//        colorFun->AddRGBPoint(420, 1, .94, .95, 0.5, 0.0);
+//        colorFun->AddRGBPoint(3071, .83, .66, 1, 0.5, 0.0);
+
+//        opacityFun->AddPoint(-3024, 0, 0.5, 0.0);
+//        opacityFun->AddPoint(-155, 0, 0.5, 0.92);
+//        opacityFun->AddPoint(217, .68, 0.33, 0.45);
+//        opacityFun->AddPoint(420, .83, 0.5, 0.0);
+//        opacityFun->AddPoint(3071, .80, 0.5, 0.0);
+
+//        mapper->SetBlendModeToComposite();
+//        property->ShadeOn();
+//        property->SetAmbient(0.1);
+//        property->SetDiffuse(0.9);
+//        property->SetSpecular(0.2);
+//        property->SetSpecularPower(10.0);
+//        property->SetScalarOpacityUnitDistance(0.8919);
+//        break;
+//    default:
+//        vtkGenericWarningMacro("Unknown blend type.");
+//        break;
+//    }
+
+//    // Set the default window size
+//    renWin->SetSize(600, 600);
+//    renWin->SetWindowName("FixedPointVolumeRayCastMapperCT");
+//    //renWin->Render();
+
+//    // Add the volume to the scene
+//    renderer2->AddVolume(volume);
+
+//    renderer2->ResetCamera();
+//    renderer2->SetBackground(colors->GetColor3d("0").GetData());
+
+//    auto camera = renderer2->GetActiveCamera();
+//    camera->SetPosition(56.8656, -297.084, 78.913);
+//    //camera->SetFocalPoint(109.139, 120.604, 63.5486);
+//    camera->SetViewUp(-0.00782421, -0.0357807, -0.999329);
+//    //camera->SetDistance(421.227);
+//    //camera->SetClippingRange(146.564, 767.987);
+
+
+
+
+//    vtkNew<vtkRenderWindowInteractor> renderWindowInteractor;
+//    vtkNew<vtkInteractorStyleImage> style;
+//    vtkSmartPointer<vtkGenericOpenGLRenderWindow> mRenderWindow_4 = (vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New());
+//    vtkSmartPointer<vtkRenderer> mRenderer = (vtkSmartPointer<vtkRenderer>::New());
+//    vtkSmartPointer<QVTKInteractor> mInteractor = (vtkSmartPointer<QVTKInteractor>::New());
+//    vtkSmartPointer<vtkInteractorStyle> mInteractorStyle = (vtkSmartPointer<vtkInteractorStyle>::New());
+
+//    ui->volumeView->setRenderWindow(mRenderWindow_4);
+//    mInteractor->Initialize();
+//    mRenderer->SetBackground(0, 0, 0);
+
+//    renderWindowInteractor->SetInteractorStyle(style);
+
+//    renderWindowInteractor->SetRenderWindow(ui->volumeView->renderWindow());
+
+//    renderWindowInteractor->Initialize();
+
+//    mRenderer->SetBackground(
+//    colors->GetColor3d("LightSlateGray").GetData());
+//    mRenderWindow_4->SetSize(600, 300);
+//    mRenderWindow_4->AddRenderer(renderer2);
+//    mRenderWindow_4->SetInteractor(mInteractor);
+
+//    mRenderWindow_4->Render();
+
+//    renderWindowInteractor->SetInteractorStyle(mInteractorStyle);
+//    mRenderer->ResetCamera();
+
+
+//    renderWindowInteractor->Start();
+
+
+//    ui->volumeView->setRenderWindow(renWin);
+
+
+
+
+//}
+//void MainWindow::volumeSliderCtrl()
+//{
+
+//    lightIntensity = (ui->volumeSlider->value())*-1;
+//    MainWindow::volumeRender(0);
+
+//}
