@@ -503,7 +503,7 @@
             </widget>
            </item>
            <item row="1" column="0" rowspan="3">
-            <widget class="QVTKOpenGLNativeWidget" name="volumeView">
+            <widget class="QOpenGLWidget" name="volumeView">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
                <horstretch>0</horstretch>
@@ -674,7 +674,7 @@ selection-background-color: rgb(143, 143, 143);</string>
      <addaction name="actionAxial_View"/>
      <addaction name="actionCoronal_View"/>
      <addaction name="actionSagital_View"/>
-     <addaction name="actionParonama_View"/>
+     <addaction name="actionPanorama_View"/>
      <addaction name="actionCross_Sections_View"/>
      <addaction name="actionImplant_Tangential_View"/>
     </widget>
@@ -1510,7 +1510,7 @@ selection-background-color: rgb(143, 143, 143);</string>
     <string>Sagital View</string>
    </property>
   </action>
-  <action name="actionParonama_View">
+  <action name="actionPanorama_View">
    <property name="icon">
     <iconset>
      <normaloff>../../images/Paronamic.PNG</normaloff>../../images/Paronamic.PNG</iconset>
@@ -2379,13 +2379,6 @@ selection-background-color: rgb(143, 143, 143);</string>
    </property>
   </action>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>QVTKOpenGLNativeWidget</class>
-   <extends>QOpenGLWidget</extends>
-   <header>qvtkopenglnativewidget.h</header>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

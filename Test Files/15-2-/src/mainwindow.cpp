@@ -6,12 +6,19 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->actionOpenFolder, SIGNAL(triggered()), this, SLOT(openFolder()));
+    connect(ui->actionAxial_View, SIGNAL(triggered()), this, SLOT(normalViews()));
+    connect(ui->actionPanorama_View, SIGNAL(triggered()), this, SLOT(constructedViews()));
+
     QObject::connect(ui->axialMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenAxial);
     QObject::connect(ui->axialMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenAxial);
     QObject::connect(ui->coronalMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenCoronal);
     QObject::connect(ui->coronalMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenCoronal);
     QObject::connect(ui->sagittalMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenSagittal);
     QObject::connect(ui->sagittalMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenSagittal);
+    QObject::connect(ui->panoramaMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenPanorama);
+    QObject::connect(ui->panoramaMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenPanorama);
+    QObject::connect(ui->serialMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenSerial);
+    QObject::connect(ui->serialMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenSerial);
 
     QObject::connect(ui->axialSlider, &QSlider::valueChanged,
                          this, &MainWindow::axialSliderCtrl);
@@ -19,6 +26,10 @@ MainWindow::MainWindow(QWidget *parent) :
                          this, &MainWindow::coronalSliderCtrl);
     QObject::connect(ui->sagittalSlider, &QSlider::valueChanged,
                          this, &MainWindow::sagittalSliderCtrl);
+    QObject::connect(ui->panoramaSlider, &QSlider::valueChanged,
+                         this, &MainWindow::panoramaSliderCtrl);
+    QObject::connect(ui->serialSlider, &QSlider::valueChanged,
+                         this, &MainWindow::serialSliderCtrl);
 //    QObject::connect(ui->volumeSlider, &QSlider::valueChanged,
 //                         this, &MainWindow::volumeSliderCtrl);
 
@@ -55,12 +66,17 @@ void MainWindow::initSliders(){
 
     ui->panoramaSlider->setRange(0,offset);
     ui->panoramaSlider->setValue(offset/2);
+
+    ui->serialSlider->setRange(curveCtrlX[0],curveCtrlX[10]);
+    ui->serialSlider->setValue(curveCtrlX[0]);
 }
 
 void MainWindow::initViews(){
     MainWindow::axialViewCtrl(0);
     MainWindow::coronalViewCtrl(0);
     MainWindow::sagittalViewCtrl(0);
+    MainWindow::panoramaViewCtrl(offset/2);
+    MainWindow::serialViewCtrl(curveCtrlX[0]);
 }
 
 
@@ -85,7 +101,8 @@ void MainWindow::openFolder() {
     int id =MainWindow::panoramaSliceSelect();
     cv::Mat skeleton = MainWindow::SkeletonGenerate(id);
     MainWindow::ctrlPtsCalculate(skeleton);
-    cv::Mat panorama = MainWindow::constructPanorama(offset/2);
+    cv::Mat panorama = panoramaProjection(offset/2);
+    cv::Mat serial = serialProjection(100);
     MainWindow::MPR();
     MainWindow::initViews();
     MainWindow::initSliders();
@@ -129,7 +146,6 @@ void MainWindow::DicomTags(std::string FolderPath) {
         std::string tagkey = itr->first;
         std::string tagvalue = entryvalue->GetMetaDataObjectValue();
         dicomTags.insert(std::pair<std::string, std::string>(tagkey, tagvalue));
-        std::cout<<"key is "<<tagkey<<"  value is "<<tagvalue<<std::endl;
         }
         ++itr;
     }
@@ -184,9 +200,7 @@ void MainWindow::grayTransform() {
        DicomImages.push_back(new DicomImage(Full_Path_Names[i].c_str()));
        axialImages.push_back(new cv::Mat(int(DicomImages[i]->getWidth()), int(DicomImages[i]->getHeight()),
                                          CV_16U,(short*)DicomImages[i]->getOutputData(16)));
-       cv::imshow("axial",*axialImages[i]);
-       cv::waitKey(0);
-
+     
     }
     for(int i=0;i<256;i++){
         histogram.push_back(0);
@@ -231,6 +245,16 @@ void MainWindow::sagittalSliderCtrl(){
     MainWindow::sagittalViewCtrl(sliderValue);
 }
 
+void MainWindow::panoramaSliderCtrl(){
+    int sliderValue = ui->panoramaSlider->value();
+    MainWindow::panoramaViewCtrl(sliderValue);
+}
+
+void MainWindow::serialSliderCtrl(){
+    int sliderValue = ui->serialSlider->value();
+    MainWindow::serialViewCtrl(sliderValue);
+}
+
 
 void MainWindow::axialViewCtrl(int id){
     sceneManager.sceneAxial = new Scenez(this);
@@ -255,6 +279,22 @@ void MainWindow::sagittalViewCtrl(int id){
     QRectF rc(QPoint(0, 0), sagittalPixmap.size());
     ui->sagittalView->fitInView(rc, Qt::KeepAspectRatio);
     ui->sagittalView->setScene(sceneManager.sceneSagittal);
+}
+void MainWindow::panoramaViewCtrl(int id){
+    sceneManager.scenePanorama = new Scenez(this);
+    QPixmap panoramaPixmap= ASM::cvMatToQPixmap(panoramaProjection(id));
+    sceneManager.scenePanorama->addPixmap(panoramaPixmap);
+    QRectF rc(QPoint(0, 0), panoramaPixmap.size());
+    ui->sagittalView->fitInView(rc, Qt::KeepAspectRatio);
+    ui->panoramaView->setScene(sceneManager.scenePanorama);
+}
+void MainWindow::serialViewCtrl(int id){
+    sceneManager.sceneSerial = new Scenez(this);
+    QPixmap serialPixmap= ASM::cvMatToQPixmap(serialProjection(id));
+    sceneManager.sceneSerial->addPixmap(serialPixmap);
+    QRectF rc(QPoint(0, 0), serialPixmap.size());
+    ui->serialView->fitInView(rc, Qt::KeepAspectRatio);
+    ui->serialView->setScene(sceneManager.sceneSerial);
 }
 
 void MainWindow::maxScreenAxial(){
@@ -302,6 +342,55 @@ void MainWindow::minScreenSagittal(){
     ui->volumeWidget->show();
 }
 
+void MainWindow::maxScreenPanorama(){
+    ui->axialWidget->hide();
+    ui->coronalWidget->hide();
+    ui->sagittalWidget->hide();
+    ui->volumeWidget->hide();
+    ui->serialWidget->hide();
+    ui->curveWidget->hide();
+}
+void MainWindow::minScreenPanorama(){
+    ui->sagittalWidget->hide();
+    ui->volumeWidget->show();
+    ui->panoramaWidget->show();
+    ui->serialWidget->show();
+}
+
+void MainWindow::maxScreenSerial(){
+    ui->axialWidget->hide();
+    ui->coronalWidget->hide();
+    ui->sagittalWidget->hide();
+    ui->volumeWidget->hide();
+    ui->panoramaWidget->hide();
+    ui->curveWidget->hide();
+}
+void MainWindow::minScreenSerial(){
+    ui->serialWidget->hide();
+    ui->volumeWidget->show();
+    ui->panoramaWidget->show();
+    ui->curveWidget->show();
+}
+
+void MainWindow::normalViews(){
+    ui->axialWidget->show();
+    ui->coronalWidget->show();
+    ui->sagittalWidget->show();
+    ui->volumeWidget->show();
+    ui->panoramaWidget->hide();
+    ui->serialWidget->hide();
+    ui->curveWidget->hide();
+}
+
+void MainWindow::constructedViews(){
+    ui->axialWidget->hide();
+    ui->coronalWidget->hide();
+    ui->sagittalWidget->hide();
+    ui->volumeWidget->show();
+    ui->panoramaWidget->show();
+    ui->serialWidget->show();
+    ui->curveWidget->show();
+}
 void MainWindow::statistics(){
       double sumFreq = 0;
       double sumNum=0;

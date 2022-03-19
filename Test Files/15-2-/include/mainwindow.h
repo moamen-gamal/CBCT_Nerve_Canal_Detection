@@ -93,10 +93,14 @@ public slots:
     void axialSliderCtrl();
     void coronalSliderCtrl();
     void sagittalSliderCtrl();
+    void panoramaSliderCtrl();
+    void serialSliderCtrl();
 
     void axialViewCtrl(int id);
     void sagittalViewCtrl(int id);
     void coronalViewCtrl(int id);
+    void panoramaViewCtrl(int id);
+    void serialViewCtrl(int id);
     //void volumeSliderCtrl();
 
     void maxScreenAxial();
@@ -107,6 +111,15 @@ public slots:
 
     void maxScreenSagittal();
     void minScreenSagittal();
+
+    void maxScreenPanorama();
+    void minScreenPanorama();
+
+    void maxScreenSerial();
+    void minScreenSerial();
+
+    void normalViews();
+    void constructedViews();
 
     void statistics();
     void DicomTags(std::string Path);
