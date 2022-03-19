@@ -656,6 +656,7 @@ selection-background-color: rgb(143, 143, 143);</string>
     <addaction name="actionDistance_Measure_mm"/>
     <addaction name="actionAngular_Measure"/>
     <addaction name="separator"/>
+    <addaction name="action_select_Measure"/>
     <addaction name="actionClear_Measurements"/>
     <addaction name="separator"/>
     <addaction name="actionFiltering"/>
@@ -2376,6 +2377,11 @@ selection-background-color: rgb(143, 143, 143);</string>
    </property>
    <property name="text">
     <string>Default</string>
+   </property>
+  </action>
+  <action name="action_select_Measure">
+   <property name="text">
+    <string>     Select Measure</string>
    </property>
   </action>
  </widget>

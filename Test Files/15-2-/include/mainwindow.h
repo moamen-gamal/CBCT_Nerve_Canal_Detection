@@ -133,6 +133,9 @@ public slots:
     cv::Mat serialProjection(int id);
     //void volumeRender(int Mode);
 
+    void lineMeasurment();
+    void lineSelect();
+
 };
 
 #endif // MAINWINDOW_H

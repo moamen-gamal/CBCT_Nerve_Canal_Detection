@@ -1,7 +1,7 @@
 #include "All_Librarries.h"
 #include "scene.h"
-#ifndef views
-#define views
+#ifndef SCENEMANAGER_H
+#define SCENEMANAGER_H
 
 class SceneManager
 {

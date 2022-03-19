@@ -8,6 +8,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionOpenFolder, SIGNAL(triggered()), this, SLOT(openFolder()));
     connect(ui->actionAxial_View, SIGNAL(triggered()), this, SLOT(normalViews()));
     connect(ui->actionPanorama_View, SIGNAL(triggered()), this, SLOT(constructedViews()));
+    connect(ui->actionDistance_Measure_mm, SIGNAL(triggered()), this, SLOT(lineMeasurment()));
+    connect(ui->action_select_Measure, SIGNAL(triggered()), this, SLOT(selectMesurment()));
+
 
     QObject::connect(ui->axialMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenAxial);
     QObject::connect(ui->axialMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenAxial);
@@ -20,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->serialMaxScreen,&QPushButton::clicked ,this,&MainWindow::maxScreenSerial);
     QObject::connect(ui->serialMinScreen,&QPushButton::clicked ,this,&MainWindow::minScreenSerial);
 
+
     QObject::connect(ui->axialSlider, &QSlider::valueChanged,
                          this, &MainWindow::axialSliderCtrl);
     QObject::connect(ui->coronalSlider, &QSlider::valueChanged,
@@ -30,8 +34,6 @@ MainWindow::MainWindow(QWidget *parent) :
                          this, &MainWindow::panoramaSliderCtrl);
     QObject::connect(ui->serialSlider, &QSlider::valueChanged,
                          this, &MainWindow::serialSliderCtrl);
-//    QObject::connect(ui->volumeSlider, &QSlider::valueChanged,
-//                         this, &MainWindow::volumeSliderCtrl);
 
     MainWindow::init();
 
@@ -78,7 +80,6 @@ void MainWindow::initViews(){
     MainWindow::panoramaViewCtrl(offset/2);
     MainWindow::serialViewCtrl(curveCtrlX[0]);
 }
-
 
 void MainWindow::openFolder() {
     folderPath= QFileDialog::getExistingDirectory(this,
@@ -631,6 +632,32 @@ cv::Mat MainWindow::serialProjection(int id){
     return serial;
 }
 
+
+void MainWindow::lineMeasurment() {
+
+
+    sceneManager.sceneAxial->setMode(Scenez::Mode(Scenez::DrawLine));
+    sceneManager.sceneCoronal->setMode(Scenez::Mode(Scenez::DrawLine));
+    sceneManager.sceneSagittal->setMode(Scenez::Mode(Scenez::DrawLine));
+    sceneManager.scenePanorama->setMode(Scenez::Mode(Scenez::DrawLine));
+    sceneManager.sceneSerial->setMode(Scenez::Mode(Scenez::DrawLine));
+    sceneManager.sceneCurve->setMode(Scenez::Mode(Scenez::DrawLine));
+
+
+
+}
+void MainWindow::lineSelect() {
+
+    sceneManager.sceneAxial->setMode(Scenez::Mode(Scenez::SelectObject));
+    sceneManager.sceneCoronal->setMode(Scenez::Mode(Scenez::SelectObject));
+    sceneManager.sceneSagittal->setMode(Scenez::Mode(Scenez::SelectObject));
+    sceneManager.scenePanorama->setMode(Scenez::Mode(Scenez::SelectObject));
+    sceneManager.sceneSerial->setMode(Scenez::Mode(Scenez::SelectObject));
+    sceneManager.sceneCurve->setMode(Scenez::Mode(Scenez::SelectObject));
+
+
+
+}
 //void MainWindow::volumeRender(int Mode)
 //{
 //    char* dirname = NULL;
