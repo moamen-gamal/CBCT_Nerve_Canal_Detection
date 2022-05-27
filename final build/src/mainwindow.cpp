@@ -16,6 +16,8 @@ MainWindow::MainWindow(QWidget *parent)
             this, &MainWindow::coronalSliderCtrl);
     QObject::connect(ui->sagittalSlider, &QSlider::valueChanged,
             this, &MainWindow::sagittalSliderCtrl);
+    QObject::connect(ui->panoramaSlider, &QSlider::valueChanged,
+            this, &MainWindow::panoramaSliderCtrl);
 }
 
 MainWindow::~MainWindow()
@@ -34,6 +36,10 @@ void MainWindow::coronalSliderCtrl(){
 void MainWindow::sagittalSliderCtrl(){
     int id = ui->sagittalSlider->value();
     MainWindow::sagittalViewCtrl(id);
+}
+void MainWindow::panoramaSliderCtrl(){
+    int id = ui->panoramaSlider->value();
+    MainWindow::panoramaViewCtrl(id);
 }
 
 void MainWindow::axialViewCtrl(int id){
@@ -60,11 +66,21 @@ void MainWindow::sagittalViewCtrl(int id){
     ui->sagittalView->fitInView(rc, Qt::KeepAspectRatio);
     ui->sagittalView->setScene(sceneManager.sceneSagittal);
 }
+void MainWindow::panoramaViewCtrl(int id){
+    this->panorama.panoramaProjection(id);
+    sceneManager.scenePanorama = new Scenez(this);
+    QPixmap panoramaPixmap= ASM::cvMatToQPixmap(this->panorama.panoramaImage);
+    sceneManager.scenePanorama->addPixmap(panoramaPixmap);
+    QRectF rc(QPoint(0, 0), panoramaPixmap.size());
+    ui->panoramaView->fitInView(rc, Qt::KeepAspectRatio);
+    ui->panoramaView->setScene(sceneManager.scenePanorama);
+}
 
-void MainWindow::setOrthogonalViews(){
+void MainWindow::setViews(){
     MainWindow::axialViewCtrl(0);
     MainWindow::coronalViewCtrl(0);
-    MainWindow::coronalViewCtrl(0);
+    MainWindow::sagittalViewCtrl(0);
+    MainWindow::panoramaViewCtrl(this->panorama.offset/2);
 }
 void MainWindow::setSliders(){
     ui->axialSlider->setRange(0,this->imageManager.axialImages.size()-1);
@@ -78,6 +94,8 @@ void MainWindow::setSliders(){
     ui->sagittalSlider->setRange(0,this->imageManager.sagittalImages.size()-1);
     ui->sagittalSlider->setValue(0);
     //std::cout<<this->imageManager.sagittalImages.size()<<std::endl;
+    ui->panoramaSlider->setRange(0,this->panorama.offset);
+    ui->panoramaSlider->setValue(this->panorama.offset/2);
 }
 
 
@@ -96,10 +114,23 @@ void MainWindow::openFolder(){
     for(int i =0;i<DICOM_Names.size();i++){
          Full_Path_Names.push_back(folderPath.toStdString() + "//" + DICOM_Names[i]);
     }
+    MainWindow::processImages();
+    MainWindow::processPanorama();
+    MainWindow::setSliders();
+    MainWindow::setViews();
+}
+
+void MainWindow::processImages(){
     this->imageManager.header.loadInfo(folderPath.toStdString());
     this->imageManager.loadImages(Full_Path_Names);
+    this->imageManager.artifactReduction(3000,1,-1000);
     this->imageManager.grayTransform();
     this->imageManager.MPR();
-    MainWindow::setSliders();
-    MainWindow::setOrthogonalViews();
+}
+void MainWindow::processPanorama(){
+    this->panorama.axialImages = this->imageManager.axialImages;
+    this->imageManager.statistics.calculateMeanStdDev();
+    this->panorama.panoramaSliceSelect(this->imageManager.statistics.mean,this->imageManager.statistics.stdDev);
+    this->panorama.SkeletonGenerate(this->imageManager.statistics.mean,this->imageManager.statistics.stdDev,this->panorama.id);
+    this->panorama.ctrlPtsCalculate(this->panorama.skeleton);
 }

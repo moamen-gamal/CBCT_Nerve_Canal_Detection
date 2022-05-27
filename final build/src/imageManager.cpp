@@ -8,7 +8,7 @@ void ImageManager::loadImages(std::vector<std::string>& path){
     DJDecoderRegistration::registerCodecs();
     for(int i =0;i<path.size();i++){
        this->DicomImages.push_back(new DicomImage(path[i].c_str(),0,0,0));
-       this->axialImages.push_back(std::make_unique<cv::Mat>(cv::Mat(int(DicomImages[i]->getWidth())
+       this->axialImages.push_back(std::make_shared<cv::Mat>(cv::Mat(int(DicomImages[i]->getWidth())
                                                             ,int(DicomImages[i]->getHeight()),CV_16UC1,
                                                             (short*)DicomImages[i]->getOutputData(16))));
     }
@@ -53,11 +53,11 @@ void ImageManager::grayTransform(){
 }
 
 void ImageManager::MPR(){
-    std::vector<std::unique_ptr<cv::Mat>>sagitialTempImages;
+    std::vector<std::shared_ptr<cv::Mat>>sagitialTempImages;
     for (int i = 0;i < axialImages[0]->rows; i++)
     {
-        sagitialTempImages.push_back(std::make_unique<cv::Mat>(cv::Mat(axialImages[0]->rows, axialImages.size(),0)));
-        coronalImages.push_back(std::make_unique<cv::Mat>(cv::Mat(axialImages.size(), axialImages[0]->rows,0)));
+        sagitialTempImages.push_back(std::make_shared<cv::Mat>(cv::Mat(axialImages[0]->rows, axialImages.size(),0)));
+        coronalImages.push_back(std::make_shared<cv::Mat>(cv::Mat(axialImages.size(), axialImages[0]->rows,0)));
     }
 
     for (int K = axialImages.size() - 1;K >= 0;K--)
@@ -86,7 +86,7 @@ void ImageManager::MPR(){
         rot.at<double>(0, 2) += bbox.width / 2.0 - sagitialTempImages[i]->cols / 2.0;
         rot.at<double>(1, 2) += bbox.height / 2.0 - sagitialTempImages[i]->rows / 2.0;
 
-        sagittalImages.push_back(std::make_unique<cv::Mat>());
+        sagittalImages.push_back(std::make_shared<cv::Mat>());
         cv::warpAffine(*sagitialTempImages[i], *sagittalImages[i], rot, bbox.size());
         cv::flip(*sagittalImages[i], *sagittalImages[i], 1);
     }
@@ -94,7 +94,10 @@ void ImageManager::MPR(){
 }
 
 void ImageManager::Reset(){
-    DicomImages.clear();
+    for(int i = DicomImages.size()-1; i>=0;i--){
+        delete DicomImages[i];
+        DicomImages.pop_back();
+    }
     axialImages.clear();
     coronalImages.clear();
     sagittalImages.clear();

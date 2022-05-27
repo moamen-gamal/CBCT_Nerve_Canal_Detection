@@ -13,26 +13,25 @@
 #include<spline.h>
 
 class panorama{
-    private:
-    
+    public:
+        std::vector<std::shared_ptr<cv::Mat>> axialImages;
+        int id;
         int offset;
-
         std::vector<double> curveCtrlX;
         std::vector<double> curveCtrlY;
-        std::vector<cv::Mat*> axialImages;
-
-    public:    
 
         std::vector<double> curveShiftX;
         std::vector<double> curveShiftY;
-        cv::Mat panoramaImage;  
+        cv::Mat skeleton;
+        cv::Mat panoramaImage;
 
     public:
         panorama();
         ~panorama();
-        int panoramaSliceSelect();
-        cv::Mat SkeletonGenerate(int id);
-        int Offset(cv::Mat img);
+
+        void panoramaSliceSelect(float mean,float stdDev);
+        void SkeletonGenerate(float mean,float stdDev,int id);
+        void Offset(cv::Mat img);
         void ctrlPtsCalculate(cv::Mat skeleton);
         void shiftCurve(float shift);
         void panoramaProjection(float shiftValue);

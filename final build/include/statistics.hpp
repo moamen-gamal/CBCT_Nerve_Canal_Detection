@@ -1,7 +1,7 @@
 #ifndef STATISTICS_H
 #define STATISTICS_H
 #include<vector>
-
+#include<numeric>
 #include <opencv2/opencv.hpp>
 
 class statistics{
@@ -12,8 +12,7 @@ class statistics{
     public:
         statistics();
         ~statistics();
-        void calculateMean();
-        void calculateStdDev();
+        void calculateMeanStdDev();
         void addFreq(int&);
         void Reset();
 };

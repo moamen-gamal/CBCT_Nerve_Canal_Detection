@@ -31,15 +31,15 @@ void DicomTags::loadInfo(std::string Directory){
     while (itr != end)
     {
         itk::MetaDataObjectBase::Pointer entry = itr->second;
-
         MetaDataStringType::Pointer entryvalue = dynamic_cast<MetaDataStringType *>(entry.GetPointer());
-
         if (entryvalue)
         {
-        std::string tagkey = itr->first;
-        std::string tagvalue = entryvalue->GetMetaDataObjectValue();
-        this->dicomTags.insert(std::pair<std::string, std::string>(tagkey, tagvalue));
+            std::string tagkey = itr->first;
+            std::string tagvalue = entryvalue->GetMetaDataObjectValue();
+            this->dicomTags.insert(std::pair<std::string, std::string>(tagkey, tagvalue));
+//            std::cout<<"key is "<<tagkey<<"  value is "<<tagvalue<<std::endl;
         }
+
         ++itr;
     }
 }

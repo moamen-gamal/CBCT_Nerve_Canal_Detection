@@ -4,16 +4,14 @@ panorama::panorama(){}
 panorama::~panorama(){}
 
 
-int panorama::panoramaSliceSelect(){
+void panorama::panoramaSliceSelect(float mean,float stddev){
     std::vector<int>whiteNum;
-    int size = axialImages.size()-1;
+    int size = this->axialImages.size()-1;
     int selections[9] = {int(size*(4/(float)16)),int(size*(5/(float)16)),int(size*(6/(float)16)),int(size*(7/(float)16)),
                         int(size*(8/(float)16)),int(size*(9/(float)16)),int(size*(10/(float)16)),int(size*(9/(float)16)),
                                                                                                int(size*(12/(float)16))};
-
-
     double 	maxval = 255;
-    double 	thresh= mean+ 3 * stddev;
+    double 	thresh= mean+ 2 * stddev;
     cv::Mat ThresImages[9];
     for(int i =0;i<9;i++){
         cv::threshold(*axialImages[selections[i]], ThresImages[i], thresh, maxval, 0);
@@ -28,14 +26,16 @@ int panorama::panoramaSliceSelect(){
             max =i;
         }
     }
-    return selections[max];
+   this->id = selections[max];
 
 }
 
-cv::Mat panorama::SkeletonGenerate(int id){
+void panorama::SkeletonGenerate(float mean, float stddev, int id){
         cv::Mat image = *axialImages[id];
+        cv::imshow("img",image);
+        cv::waitKey(0);
         double 	maxval = 255;
-        double 	thresh= mean +3*stddev;
+        double 	thresh= mean +2*stddev;
         cv::Mat thresholdedImg;
         cv::threshold(image, thresholdedImg, thresh, maxval, 0);
 
@@ -65,15 +65,15 @@ cv::Mat panorama::SkeletonGenerate(int id){
             }
         }
         cvtColor(dst, dst, cv::COLOR_RGB2GRAY);
-        this->offset = Offset(dst);
+        Offset(dst);
         cv::Mat blur;
         cv::blur(dst,blur,cv::Size(9,9));
         cv::Mat SkeletonImg;
         cv::ximgproc::thinning (blur, SkeletonImg ,  0);
-        return SkeletonImg;
+        this->skeleton = SkeletonImg;
 }
 
-int panorama::Offset(cv::Mat img) {
+void panorama::Offset(cv::Mat img) {
     std::vector<int>whiteNum;
     for (int y = 0; y < img.cols; y++) {
         int sum = 0;
@@ -91,7 +91,7 @@ int panorama::Offset(cv::Mat img) {
         avg += whiteNum[i];
     }
     avg /= whiteNum.size();
-    return avg;
+    this->offset =  avg;
 }
 
 void panorama::ctrlPtsCalculate(cv::Mat skeleton){
@@ -151,7 +151,6 @@ void panorama::shiftCurve(float shift) {
     }
     else {
         //control points stay the same if not required a shift
-        double shiftValue = 0;
         for (int i = 0;i < this->curveCtrlX.size();i++) {
             this->curveShiftX[i] = this->curveCtrlX[i];
             this->curveShiftY[i] = this->curveCtrlY[i];

@@ -8,6 +8,7 @@
 #include<cvQTconvert.h>
 #include<naturalSort.h>
 #include<QFileDialog>
+#include<panorama.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -22,21 +23,27 @@ public:
 
     ImageManager imageManager;
     SceneManager sceneManager;
+    panorama panorama;
     std::vector<std::string> DICOM_Names;
     std::vector<std::string> Full_Path_Names;
     QString folderPath;
+    bool isFileopened = false;
+
 public slots:
+    void processImages();
+    void processPanorama();
 
     void axialSliderCtrl();
     void coronalSliderCtrl();
     void sagittalSliderCtrl();
-
+    void panoramaSliderCtrl();
 
     void axialViewCtrl(int id);
-    void sagittalViewCtrl(int id);
     void coronalViewCtrl(int id);
+    void sagittalViewCtrl(int id);
+    void panoramaViewCtrl(int id);
 
-    void setOrthogonalViews();
+    void setViews();
     void setSliders();
 
     void openFolder();

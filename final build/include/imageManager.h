@@ -19,20 +19,21 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/opencv.hpp>
-
+#include <panorama.h>
 class ImageManager{
     public:
         std::vector<DicomImage*>DicomImages;
-        std::vector<std::unique_ptr<cv::Mat>> axialImages;
-        std::vector<std::unique_ptr<cv::Mat>> coronalImages;
-        std::vector<std::unique_ptr<cv::Mat>> sagittalImages;
+        std::vector<std::shared_ptr<cv::Mat>> axialImages;
+        std::vector<std::shared_ptr<cv::Mat>> coronalImages;
+        std::vector<std::shared_ptr<cv::Mat>> sagittalImages;
         statistics statistics;
         DicomTags  header;
+
     public:
         ImageManager();
         ~ImageManager();
-        void loadImages(std::vector<std::string>&);
-        void artifactReduction(int,int,int);
+        void loadImages(std::vector<std::string>& Path);
+        void artifactReduction(int threshold,int slope,int intercept);
         void grayTransform();
         void MPR();
         void Reset();

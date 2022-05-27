@@ -5,26 +5,23 @@ statistics::statistics(){
         }
 }
 statistics::~statistics(){}
-void statistics::calculateMean(){
-    double sumFreq = 0;
-    double sumNum=0;
-    for(int i=0;i<256;i++){
-        sumFreq +=i*histogram[i];
-        sumNum +=histogram[i];
+void statistics::calculateMeanStdDev(){
+    long sumFreq = std::accumulate(histogram.begin(),histogram.end(),0);
+    long mulFreq =0;
+    for(int i =0;i<histogram.size();i++){
+//        std::cout<<"Freq of "<<i<<" is "<<histogram[i]<<std::endl;
+        mulFreq += i*histogram[i];
     }
-    this->mean =sumFreq/sumNum;
-}
-void statistics::calculateStdDev(){
-    double fx2 = 0;
-    double num = 0;
-    double numerator, denom;
-    for (int i = 0; i < histogram.size(); i++) {
-        fx2 += pow(i, 2) * histogram[i];
-        num += histogram[i];
+    this->mean = mulFreq/double(sumFreq);
+    std::cout<<"mean is "<<this->mean<<std::endl;
+    double sum =0;
+    for(int i=0;i<histogram.size();i++){
+        sum += pow((i - mean),2)*histogram[i];
+
     }
-    numerator =  fx2 - num *pow(this->mean,2);
-    denom =  (num - 1);
-    this->stdDev = sqrt(numerator / denom);
+    this->stdDev = sqrt(sum/sumFreq);
+    std::cout<<"stdDev is "<<this->stdDev<<std::endl;
+
 }
 void statistics::addFreq(int& value){
     this->histogram[value]++;
