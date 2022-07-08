@@ -9,6 +9,8 @@
 #include<naturalSort.h>
 #include<QFileDialog>
 #include<panorama.h>
+#include<PeakFinder.h>
+#include<imageprocess.h>
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
@@ -27,7 +29,7 @@ public:
     std::vector<std::string> DICOM_Names;
     std::vector<std::string> Full_Path_Names;
     QString folderPath;
-    bool isFileopened = false;
+    int rotationConfigVal =0;
 
 public slots:
     void processImages();
@@ -43,9 +45,42 @@ public slots:
     void sagittalViewCtrl(int id);
     void panoramaViewCtrl(int id);
 
+    void axialMinView();
+    void axialShowView();
+    void axialMaxView();
+
+    void coronalMinView();
+    void coronalShowView();
+    void coronalMaxView();
+
+    void sagittalMinView();
+    void sagittalShowView();
+    void sagittalMaxView();
+
+    void curveMinView();
+    void curveShowView();
+    void curveMaxView();
+
+    void serialMinView();
+    void serialShowView();
+    void serialMaxView();
+
+    void panoramaMinView();
+    void panoramaShowView();
+    void panoramaMaxView();
+
+    void volumeMinView();
+    void volumeShowView();
+    void volumeMaxView();
+
+    void resetView();
+
+    void configView();
+    void configImagesRotation();
+    void ApplyRotationConfigs();
+
     void setViews();
     void setSliders();
-
     void openFolder();
 private:
     Ui::MainWindow *ui;

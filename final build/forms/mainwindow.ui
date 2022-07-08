@@ -16,8 +16,11 @@
   <property name="toolTipDuration">
    <number>3</number>
   </property>
+  <property name="autoFillBackground">
+   <bool>false</bool>
+  </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(0, 80, 110);</string>
+   <string notr="true">background-color:#EDEDED</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout_2">
@@ -34,13 +37,6 @@
            </sizepolicy>
           </property>
           <layout class="QGridLayout" name="gridLayout_11">
-           <item row="1" column="3">
-            <widget class="QSlider" name="curveSlider">
-             <property name="orientation">
-              <enum>Qt::Vertical</enum>
-             </property>
-            </widget>
-           </item>
            <item row="0" column="3">
             <widget class="QPushButton" name="curveMaxScreen">
              <property name="enabled">
@@ -90,6 +86,13 @@
              <property name="icon">
               <iconset>
                <normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/min.png</normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/min.png</iconset>
+             </property>
+            </widget>
+           </item>
+           <item row="1" column="3">
+            <widget class="QSlider" name="curveSlider">
+             <property name="orientation">
+              <enum>Qt::Vertical</enum>
              </property>
             </widget>
            </item>
@@ -600,6 +603,98 @@
       </item>
      </layout>
     </item>
+    <item row="0" column="1">
+     <widget class="QWidget" name="configWidget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <layout class="QGridLayout" name="gridLayout_10">
+       <item row="0" column="3">
+        <widget class="QPushButton" name="configRotateButton">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>rotate</string>
+         </property>
+         <property name="toolTipDuration">
+          <number>500</number>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color:#082032;</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/max.png</normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/max.png</iconset>
+         </property>
+         <property name="autoRepeatInterval">
+          <number>100</number>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="0" column="0" rowspan="3" colspan="3">
+        <widget class="QGraphicsView" name="configView">
+         <property name="styleSheet">
+          <string notr="true">background-color: rgb(0, 0, 0);</string>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::NoFrame</enum>
+         </property>
+        </widget>
+       </item>
+       <item row="2" column="3">
+        <widget class="QPushButton" name="configApplyRotateButton">
+         <property name="enabled">
+          <bool>true</bool>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>20</width>
+           <height>20</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>maximize</string>
+         </property>
+         <property name="toolTipDuration">
+          <number>500</number>
+         </property>
+         <property name="styleSheet">
+          <string notr="true">background-color:#082032;</string>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+         <property name="icon">
+          <iconset>
+           <normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/max.png</normaloff>../../GP_mandibular_canal_detection/Test Files/15-2-/icons/max.png</iconset>
+         </property>
+         <property name="autoRepeatInterval">
+          <number>100</number>
+         </property>
+         <property name="autoDefault">
+          <bool>false</bool>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </widget>
+    </item>
    </layout>
   </widget>
   <widget class="QMenuBar" name="menubar">
@@ -838,7 +933,7 @@ selection-background-color: rgb(143, 143, 143);</string>
     <bool>false</bool>
    </property>
    <property name="styleSheet">
-    <string notr="true">background-color:#082032;</string>
+    <string notr="true">background-color:#3B3634;</string>
    </property>
    <property name="iconSize">
     <size>

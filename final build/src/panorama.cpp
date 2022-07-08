@@ -1,76 +1,157 @@
 #include "panorama.h"
+#include <numeric>
 
 panorama::panorama(){}
 panorama::~panorama(){}
-
-
-void panorama::panoramaSliceSelect(float mean,float stddev){
-    std::vector<int>whiteNum;
-    int size = this->axialImages.size()-1;
-    int selections[9] = {int(size*(4/(float)16)),int(size*(5/(float)16)),int(size*(6/(float)16)),int(size*(7/(float)16)),
-                        int(size*(8/(float)16)),int(size*(9/(float)16)),int(size*(10/(float)16)),int(size*(9/(float)16)),
-                                                                                               int(size*(12/(float)16))};
-    double 	maxval = 255;
-    double 	thresh= mean+ 2 * stddev;
-    cv::Mat ThresImages[9];
-    for(int i =0;i<9;i++){
-        cv::threshold(*axialImages[selections[i]], ThresImages[i], thresh, maxval, 0);
-    }
-    for(int i=0;i<9;i++){
-        whiteNum.push_back(0);
-        whiteNum[i] =cv::countNonZero(ThresImages[i]);
-    }
-    int max =0;
-    for(int i=1;i<9;i++){
-        if(whiteNum[max]<whiteNum[i]){
-            max =i;
-        }
-    }
-   this->id = selections[max];
-
-}
-
-void panorama::SkeletonGenerate(float mean, float stddev, int id){
-        cv::Mat image = *axialImages[id];
-        cv::imshow("img",image);
-        cv::waitKey(0);
-        double 	maxval = 255;
-        double 	thresh= mean +2*stddev;
-        cv::Mat thresholdedImg;
-        cv::threshold(image, thresholdedImg, thresh, maxval, 0);
-
-        cv::Mat im_floodfill = thresholdedImg.clone();
-        cv::floodFill(im_floodfill, cv::Point(0, 0), cv::Scalar(255));
-        cv::Mat im_floodfill_inv;
-        cv::bitwise_not(im_floodfill, im_floodfill_inv);
-        cv::Mat holeFilled = (thresholdedImg | im_floodfill_inv);
-        cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(30,30));
-        cv::Mat closingImg;
-        morphologyEx(holeFilled, closingImg,cv::MORPH_CLOSE, element,cv::Point(-1, -1), 2);
-
-        cv::Mat labelImage(image.size(), CV_32S),dst(image.size(), CV_8UC3);
-        int nLabels = connectedComponents(closingImg, labelImage, 8);
-        std::vector<cv::Vec3b> colors(nLabels);
-        colors[0] = cv::Vec3b(0, 0, 0);//background
-        for(int label = 1; label < nLabels; ++label){
-            colors[label] = cv::Vec3b(0, 0, 0);
-            if(label ==1)
-            colors[label] = cv::Vec3b(255, 255, 255);
-        }
-        for(int r = 0; r < dst.rows; ++r){
-            for(int c = 0; c < dst.cols; ++c){
-                int label = labelImage.at<int>(r, c);
-                cv::Vec3b &pixel = dst.at<cv::Vec3b>(r, c);
-                pixel = colors[label];
+//function to determine the axial mip and range of axial slices needed to make skeleton
+cv::Mat panorama::panoramaSliceSelect(){
+    cv::Mat coronalMip = coronalImages[0]->clone();
+    for(int i = 0; i<coronalImages.size();i++){
+        for(int row = 0;row<coronalMip.rows;row++){
+            for(int col =0;col<coronalMip.cols;col++){
+                if(coronalImages[i]->at<uchar>(row,col)>=coronalMip.at<uchar>(row,col)){
+                    coronalMip.at<uchar>(row,col) =coronalImages[i]->at<uchar>(row,col);
+                }
             }
         }
-        cvtColor(dst, dst, cv::COLOR_RGB2GRAY);
-        Offset(dst);
-        cv::Mat blur;
-        cv::blur(dst,blur,cv::Size(9,9));
-        cv::Mat SkeletonImg;
-        cv::ximgproc::thinning (blur, SkeletonImg ,  0);
-        this->skeleton = SkeletonImg;
+    }
+    cv::Scalar mean,stddev;
+    cv::meanStdDev(coronalMip,mean,stddev);
+    cv::threshold(coronalMip,coronalMip,mean[0]+2*stddev[0],255,cv::THRESH_BINARY);
+    std::vector<float>rowHist(coronalMip.rows,0);
+    std::vector<int>ids;
+    for(int i =0;i<coronalMip.rows;i++){
+        auto count = cv::countNonZero(coronalMip.row(i));
+        rowHist[i] = count;
+    }
+    PeakFinder::findPeaks(rowHist,ids,true,1);
+    long sumFreq = std::accumulate(rowHist.begin(),rowHist.end(),0);
+    long mulFreq =0;
+    for(int i =0;i<rowHist.size();i++){
+        mulFreq += i*rowHist[i];
+    }
+    double Mean = mulFreq/double(sumFreq);
+    double sum =0;
+    for(int i=0;i<rowHist.size();i++){
+        sum += pow((i - Mean),2)*rowHist[i];
+
+    }
+    double stdDev = sqrt(sum/sumFreq);
+    std::vector<int>row_ids;
+    for(int i =0 ;i<ids.size();i++){
+        if(i ==0){
+            if(abs((ids[0]-ids[1])) > 70){
+//                auto it = ids.begin();
+//                ids.erase(it);
+
+            }
+            else{
+                row_ids.push_back(ids[i]);
+            }
+        }else if( i == ids.size()-1){
+            if(abs((ids[ids.size()-1]-ids[ids.size()-2])) > 70){
+//                auto it = ids.end();
+//                ids.erase(it);
+
+            }
+            else{
+                row_ids.push_back(ids[i]);
+            }
+        }
+        else{
+            if((abs((ids[i]-ids[i-1])) >70)&&(abs((ids[i+1]-ids[i])) >70)){
+//                auto it = ids.begin();
+//                it +=i;
+//                ids.erase(it);
+            }
+            else{
+                row_ids.push_back(ids[i]);
+            }
+        }
+
+    }
+    for(int i =0 ;i<row_ids.size();i++){
+        for(int j=0 ;j<coronalMip.cols;j++){
+            coronalMip.at<uchar>(row_ids[i],j)=255;
+        }
+    }
+    std::pair<int,int>HighestPeak={row_ids[0],rowHist[row_ids[0]]};
+    std::pair<int,int>secondHighestPeak=HighestPeak;
+    int H =1;
+    if(row_ids.size()>1){
+        for(int i =1 ;i<row_ids.size();i++){
+            if(rowHist[row_ids[i]] > HighestPeak.second){
+                HighestPeak={row_ids[i],rowHist[row_ids[i]]};
+            }
+        }
+        for (int i = 0;i<row_ids.size();i++){
+            if((rowHist[row_ids[i]]>= 0.5* HighestPeak.second)  &&  (row_ids[i] != HighestPeak.first))
+            {
+                secondHighestPeak = {row_ids[i],rowHist[row_ids[i]]};
+            }
+        }
+    }
+    else{
+        HighestPeak = {row_ids[0],rowHist[row_ids[0]]};
+    }
+    cv::Mat axialMip = axialImages[HighestPeak.first]->clone();
+    for(int i = HighestPeak.first-1.5*stdDev;
+        i<((secondHighestPeak.first+2.5*stdDev)>axialImages.size()-1?axialImages.size()-1:(secondHighestPeak.first+2.5*stdDev));
+        i++){
+        for(int row = 0;row<axialMip.rows;row++){
+            for(int col =0;col<axialMip.cols;col++){
+                if(axialImages[i]->at<uchar>(row,col)>=axialMip.at<uchar>(row,col)){
+                    axialMip.at<uchar>(row,col) =axialImages[i]->at<uchar>(row,col);
+                }
+            }
+        }
+    }
+    return axialMip;
+}
+
+void panorama::SkeletonGenerate(cv::Mat axialMip){
+    cv::Mat skeleton = cv::Mat::zeros(axialMip.size(),CV_8UC1);
+    cv::Scalar Ma,Sa;
+    cv::meanStdDev(axialMip,Ma,Sa);
+    cv::threshold(axialMip,axialMip,Ma[0]+2*Sa[0],255,cv::THRESH_BINARY);
+    cv::copyMakeBorder(axialMip,axialMip,50,50,50,50,cv::BORDER_CONSTANT,cv::Scalar(0));
+    cv::Mat im_floodfill = axialMip.clone();
+    cv::floodFill(im_floodfill, cv::Point(0, 0), cv::Scalar(255));
+    cv::Mat im_floodfill_inv;
+    cv::bitwise_not(im_floodfill, im_floodfill_inv);
+    cv::Mat holeFilled = (axialMip | im_floodfill_inv);
+    cv::Mat element = getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(30,30));
+    cv::Mat closingImg;
+    morphologyEx(holeFilled, closingImg,cv::MORPH_CLOSE, element,cv::Point(-1, -1), 2);
+
+    cv::Mat labelImage(axialMip.size(), CV_32S),dst(axialMip.size(), CV_8UC3);
+    int nLabels = connectedComponents(closingImg, labelImage, 8);
+    std::vector<cv::Vec3b> colors(nLabels);
+    colors[0] = cv::Vec3b(0, 0, 0);//background
+    for(int label = 1; label < nLabels; ++label){
+        colors[label] = cv::Vec3b(0, 0, 0);
+        if(label ==1)
+        colors[label] = cv::Vec3b(255, 255, 255);
+    }
+    for(int r = 0; r < dst.rows; ++r){
+        for(int c = 0; c < dst.cols; ++c){
+            int label = labelImage.at<int>(r, c);
+            cv::Vec3b &pixel = dst.at<cv::Vec3b>(r, c);
+            pixel = colors[label];
+        }
+    }
+    cvtColor(dst, dst, cv::COLOR_RGB2GRAY);
+    this->Offset(dst);
+    cv::Mat blur;
+    cv::blur(dst,blur,cv::Size(9,9));
+    cv::Mat SkeletonImg;
+    cv::ximgproc::thinning (blur, SkeletonImg ,  0);
+    for(int row = 50;row<SkeletonImg.rows-50;row++){
+        for(int col =50;col<SkeletonImg.cols-50;col++){
+            skeleton.at<uchar>(row-50,col-50)=SkeletonImg.at<uchar>(row,col);
+        }
+    }
+    this->skeleton = skeleton;
 }
 
 void panorama::Offset(cv::Mat img) {
@@ -91,7 +172,7 @@ void panorama::Offset(cv::Mat img) {
         avg += whiteNum[i];
     }
     avg /= whiteNum.size();
-    this->offset =  avg;
+    this->offset =  avg>84?avg:60;
 }
 
 void panorama::ctrlPtsCalculate(cv::Mat skeleton){
@@ -159,7 +240,6 @@ void panorama::shiftCurve(float shift) {
 
 }
 
-
 void panorama::panoramaProjection(float shiftValue){
     panorama::shiftCurve(shiftValue);
     tk::spline curve(this->curveShiftX,this->curveShiftY,tk::spline::cspline);
@@ -180,6 +260,7 @@ void panorama::panoramaProjection(float shiftValue){
     }
     
 }
+
 cv::Mat panorama::serialProjection(int id){
     tk::spline curve(this->curveCtrlX,this->curveCtrlY,tk::spline::cspline);
     cv::Mat serial(axialImages.size(),203*3,CV_8UC1);
@@ -233,3 +314,8 @@ cv::Mat panorama::serialProjection(int id){
     return serial;
 }
 
+void panorama::processPanorama(){
+    cv::Mat axialImage = this->panoramaSliceSelect();
+    this->SkeletonGenerate(axialImage);
+    this->ctrlPtsCalculate(this->skeleton);
+}

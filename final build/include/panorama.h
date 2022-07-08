@@ -8,20 +8,20 @@
 #include <opencv2/highgui.hpp>
 #include <opencv2/ximgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
-// include tk spline?
 #include <vector>
 #include<spline.h>
-
+#include<PeakFinder.h>
 class panorama{
     public:
         std::vector<std::shared_ptr<cv::Mat>> axialImages;
-        int id;
+        std::vector<std::shared_ptr<cv::Mat>> coronalImages;
         int offset;
         std::vector<double> curveCtrlX;
         std::vector<double> curveCtrlY;
 
         std::vector<double> curveShiftX;
         std::vector<double> curveShiftY;
+
         cv::Mat skeleton;
         cv::Mat panoramaImage;
 
@@ -29,12 +29,13 @@ class panorama{
         panorama();
         ~panorama();
 
-        void panoramaSliceSelect(float mean,float stdDev);
-        void SkeletonGenerate(float mean,float stdDev,int id);
+        cv::Mat panoramaSliceSelect();
+        void SkeletonGenerate(cv::Mat);
         void Offset(cv::Mat img);
         void ctrlPtsCalculate(cv::Mat skeleton);
         void shiftCurve(float shift);
         void panoramaProjection(float shiftValue);
         cv::Mat serialProjection(int id);
+        void processPanorama();
 };
 #endif

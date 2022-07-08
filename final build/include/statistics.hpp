@@ -13,7 +13,7 @@ class statistics{
         statistics();
         ~statistics();
         void calculateMeanStdDev();
-        void addFreq(int&);
+        void calculateHist(std::vector<std::shared_ptr<cv::Mat>>& axialImages);
         void Reset();
 };
 #endif
